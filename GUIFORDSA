@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font, filedialog
+from tkinter import font, filedialog, messagebox, simpledialog
 import docx
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,6 +33,36 @@ local_folder = "scrapedCVE"
 
 bar_chart_created = False
 bar_chart = None
+
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    mid = len(arr) // 2
+    left = arr[:mid]
+    right = arr[mid:]
+
+    left = merge_sort(left)
+    right = merge_sort(right)
+
+    return merge(left, right)
+
+def merge(left, right):
+    merged = []
+    i = j = 0
+
+    while i < len(left) and j < len(right):
+        if left[i][1] > right[j][1]:
+            merged.append(left[i])
+            i += 1
+        else:
+            merged.append(right[j])
+            j += 1
+
+    merged.extend(left[i:])
+    merged.extend(right[j:])
+
+    return merged
 
 # Pull CVE database
 def pull_cves(progress_bar):
@@ -580,7 +610,64 @@ def search_cve(search_text, sort_by=None, results_text=None):
 
     # Display the filtered results in the Text widget
     results_text.insert(tk.END, filtered_data.to_string(index=False))
+
+def vendor_frequency_analysis(num_items):
+    vendor_counts = {}
+
+    # Opens CSV file to carry out frequency analysis on most frequent vendors
+    with open('CVECSV.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            vendor = row['Vendor']
+            # Do not show vendors with 'n/a' or empty fields
+            if vendor != 'n/a' and vendor != '':
+                if vendor in vendor_counts:
+                    vendor_counts[vendor] += 1
+                else:
+                    vendor_counts[vendor] = 1
+
+    sorted_vendors = list(vendor_counts.items())
+    sorted_vendors = merge_sort(sorted_vendors)[::1]
+    
+    top_vendors = sorted_vendors[:num_items]  # Select number of vendors defined by user to display
+
+    top_vendors = top_vendors[::-1]  # Reverse the list to show highest frequency at the top in the chart
+
+    vendors = [vendor for vendor, count in top_vendors]
+    frequencies = [count for vendor, count in top_vendors]
+
+    plt.barh(vendors, frequencies)  # Create a horizontal bar chart
+
+    # Display the frequency value beside each bar
+    for i, freq in enumerate(frequencies):
+        plt.text(freq, i, str(freq), va='center')
+
+    plt.xlabel('Frequency')  # Label for the x-axis
+    plt.ylabel('Vendor')  # Label for the y-axis
+    plt.title("Top "+str(num_items)+" Vendors by Frequency")  # Title of the plot
+    plt.tight_layout()  # Ensure labels fit within the plot
+    # plt.show()  # Display the plot
+
+
+# Analysis Page
 def show_analysis_page():
+    print("Analysis Page Clicked")
+    
+    # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
+    home_page.pack()
+    label_toolcheck.pack()
+    label_cvesearch.pack()
+
+    # Hide label_analysis and analysis widgets
+    label_analysis.pack_forget()
+    analysis.pack_forget()
+
+    # Ask for number of items
+    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display:")
+    
+    if num_items is None:
+        return
+
     for child in page_frame.winfo_children():
         child.pack_forget()
     home_page.pack_forget()
@@ -592,12 +679,19 @@ def show_analysis_page():
     if not bar_chart_created:
         create_bar_chart()
     else:
+        # Clear bar chart data before replotting
+        plt.clf()
         # Remove the bar chart from the frame
         bar_chart.get_tk_widget().pack_forget()
+        
 
     # Repack the bar chart and existing label
     bar_chart.get_tk_widget().pack(fill='both', expand=True)
     label_analysis.pack(pady=20, side="top")
+
+    print("Number items below:")
+    print(num_items)
+    vendor_frequency_analysis(num_items)
     
 def show_home_page():
     toolcheck.pack_forget()
@@ -610,14 +704,14 @@ def create_bar_chart():
 
     if not bar_chart_created:
     # Data for the bar chart
-        CVEs = ['CVE-2020-1234', 'CVE-2021-1234', 'CVE-2022-1234']
-        values = [40, 20, 15]
+        # CVEs = ['CVE-2020-1234', 'CVE-2021-1234', 'CVE-2022-1234']
+        # values = [40, 20, 15]
 
-        # Create a bar chart
-        plt.bar(CVEs, values)
-        plt.xlabel('CVEs')
-        plt.ylabel('Values')
-        plt.title('Bar Chart for CVEs')
+        # # Create a bar chart
+        # plt.bar(CVEs, values)
+        # plt.xlabel('CVEs')
+        # plt.ylabel('Values')
+        # plt.title('Bar Chart for CVEs')
 
         # Display the bar chart
         fig = plt.gcf()  # Get the current figure
@@ -639,7 +733,7 @@ label_cvesearch = tk.Label(cvesearch, text="CVE Search", font=title_font, bg="#f
 
 # Create the Page 3
 analysis = tk.Frame(page_frame, bg="light blue")
-label_analysis = tk.Label(analysis, text="Analysis of CVEs", font=title_font, bg="#f2f2f2")
+label_analysis = tk.Label(analysis, text="Vendor Analysis", font=title_font, bg="#f2f2f2")
 
 # Create navigation buttons
 nav_frame = tk.Frame(root, bg="#f2f2f2")
@@ -655,7 +749,7 @@ page1_button.pack(side="left", padx=10)
 page2_button = tk.Button(nav_frame, text="CVE Search", command=show_cvesearch_page, **button_style)
 page2_button.pack(side="left", padx=10)
 
-page3_button = tk.Button(nav_frame, text="Analysis", command=show_analysis_page, **button_style)
+page3_button = tk.Button(nav_frame, text="Vendor Analysis", command=show_analysis_page, **button_style)
 page3_button.pack(side="left", padx=10)
 
 root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full screen
