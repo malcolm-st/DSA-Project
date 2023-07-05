@@ -440,9 +440,53 @@ update_button.pack(pady=10)
 retrieve_button = tk.Button(home_page, text="Retrieve Data", command=retrieve_data, **button_style)
 retrieve_button.pack(pady=10)
 
+def check_windows_defender_settings():
+    try:
+        output = subprocess.check_output('powershell -Command "(Get-MpPreference).DisableRealtimeMonitoring"', shell=True)
+        output = output.decode('utf-8').strip()
+        if output.lower() == 'false':
+            return "Windows Defender Real-time Monitoring: Enabled"
+        else:
+            return "Windows Defender Real-time Monitoring: Disabled"
+    except subprocess.CalledProcessError:
+        return "Error occurred while checking Windows Defender settings."
 
+def check_firewall_settings():
+    try:
+        output = subprocess.check_output('powershell -Command "(Get-NetFirewallProfile).Enabled"', shell=True)
+        output = output.decode('utf-8').strip()
 
+        firewall_profiles = {
+            'Domain': False,
+            'Private': False,
+            'Public': False
+        }
+
+        if 'True' in output:
+            enabled_profiles = subprocess.check_output('powershell -Command "(Get-NetFirewallProfile | Where-Object {$_.Enabled -eq $True}).Name"', shell=True)
+            enabled_profiles = enabled_profiles.decode('utf-8').strip()
+            enabled_profiles = enabled_profiles.split('\n')
+
+            for profile in enabled_profiles:
+                profile = profile.strip()
+                if profile in firewall_profiles:
+                    firewall_profiles[profile] = True
+
+        result = "Firewall Settings:\n"
+        for profile, enabled in firewall_profiles.items():
+            if enabled:
+                result += f"{profile}: Enabled\n"
+            else:
+                result += f"{profile}: Disabled\n"
+
+        return result
+    except subprocess.CalledProcessError:
+        return "Error occurred while checking firewall settings."
+
+# System Security Checker Page
 def show_toolcheck_page():
+    print("Tool Page clicked")
+
     for child in page_frame.winfo_children():
         child.pack_forget()
     home_page.pack_forget()
@@ -450,7 +494,11 @@ def show_toolcheck_page():
     label_analysis.pack_forget()
     label_toolcheck.pack(pady=20, side="top")
     toolcheck.pack(fill="both", expand=True)
+
+    windows_defender_result = check_windows_defender_settings()
+    firewall_result = check_firewall_settings()
     
+    label_toolcheck.config(text=f"Windows Defender Status:\n{windows_defender_result}\n\n{firewall_result}", font=("Arial", 40))
 
   
 def show_cvesearch_page():
@@ -582,7 +630,7 @@ def create_bar_chart():
 
 # Create the Page 1
 toolcheck = tk.Frame(page_frame, bg="light blue")
-label_toolcheck = tk.Label(toolcheck, text="Tool Checker: Check for CVEs", font=title_font, bg="#f2f2f2")
+label_toolcheck = tk.Label(toolcheck, text="System Security Checker", font=title_font, bg="#f2f2f2")
 
 # Create the Page 2
 cvesearch = tk.Frame(page_frame, bg="light blue")
@@ -600,7 +648,7 @@ nav_frame.pack(side="bottom", pady=10)
 home_button = tk.Button(nav_frame, text="Home", command=show_home_page, **button_style)
 home_button.pack(side="left", padx=10)
 
-page1_button = tk.Button(nav_frame, text="Tool Checker", command=show_toolcheck_page, **button_style)
+page1_button = tk.Button(nav_frame, text="System Security Checker", command=show_toolcheck_page, **button_style)
 page1_button.pack(side="left", padx=10)
 
 
