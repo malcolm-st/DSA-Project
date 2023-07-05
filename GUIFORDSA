@@ -19,10 +19,13 @@ from bs4 import BeautifulSoup
 import zipfile
 import io
 import time
+import threading
 
 # json to csv imports
 import json
 
+# Global flag variable
+is_program_running = True
 
 # Clone the repository to a local folder
 repo_url = "https://github.com/CVEProject/cvelistV5.git"
@@ -147,12 +150,12 @@ def update_cve():
         zip_ref.extractall("updatedCVE")
 
     # Overwrites updated CVE files into compiledCVE folder
-    move_files("updatedCVE/deltaCves", "compiledCVE")
+    move_files_update("updatedCVE/deltaCves", "compiledCVE")
 
     # Removes original updatedCVE folder
     shutil.rmtree("updatedCVE")
 
-
+# Indefinitely check for updates
 def check_for_updates():
     # Define the repository details
     username = "CVEProject"
@@ -168,7 +171,7 @@ def check_for_updates():
     last_commit_hash = None
 
     # Loop indefinitely to check for updates
-    while True:
+    while is_program_running:
         # Send a GET request to the API endpoint to get branch details
         response = requests.get(api_endpoint, headers=headers)
 
@@ -198,9 +201,13 @@ def check_for_updates():
         # Wait for 1 hour before checking again
         # time.sleep(3600)
 
-        # Updates Database every 5 seconds
+        # Updates Database every minute
         time.sleep(60)
 
+# Function to call the check_for_updates function in a separate thread
+def run_update_checker():
+    thread = threading.Thread(target=check_for_updates)
+    thread.start()
 
 def json_to_csv(json_folder, csv_file):
     # List all JSON files in the folder
@@ -268,7 +275,13 @@ def display_docx_content(file_path):
 
 def update():
     print("Update button clicked")
-    check_for_updates()
+
+    # check_for_updates() will update CVEs properly, but GUI will not respond due to while loop
+    # check_for_updates()
+
+    # Use threading to call the function instead
+    run_update_checker()
+
 
 def retrieve_data():
     print("Retrieve Data button clicked")
@@ -539,11 +552,18 @@ return_button = tk.Button(return_frame, text="Return to Home", command=show_home
 return_button.pack(pady=10)
 
 
+
 # Set initial page
 show_page(home_page)
 
 def quit_program():
     root.quit()
+    global is_program_running
+    is_program_running = False
+    root.destroy()
+
+# Bind the on_close function to the close event of the GUI window
+root.protocol("WM_DELETE_WINDOW", quit_program)
 
 quit_button = tk.Button(nav_frame, text="Quit", command=quit_program, **button_style)
 quit_button.pack(side="left", padx=10)
