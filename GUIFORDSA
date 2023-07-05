@@ -97,6 +97,73 @@ def move_files_update(source_directory, destination_directory):
             # Recursively move files in the sub-directory
             move_files(item_path, destination_directory)
 
+def update_csv_from_json():
+    json_folder = 'updatedCVE/deltaCves'
+    csv_file = 'CVECSV.csv'
+
+    csv_data = []  # List to store the CSV data
+    
+    # Read existing CSV data
+    with open(csv_file, 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        csv_data = list(reader)
+    
+    # Check if the last row is the header row only
+    last_row_header_only = len(csv_data) > 0 and csv_data[-1][0] == 'CveID'
+    
+    for filename in os.listdir(json_folder):
+        if filename.endswith('.json'):
+            cve_id = filename.split('.')[0]
+            json_file = os.path.join(json_folder, filename)
+            
+            with open(json_file, 'r', encoding='utf-8') as json_data:
+                data = json.load(json_data)
+                
+            # Access affected vendors
+            affected_vendors = data.get('containers', {}).get('cna', {}).get('affected', [])
+            vendor = affected_vendors[0].get('vendor', '') if affected_vendors else ''
+                    
+            # Access base score
+            metrics = data.get('containers', {}).get('cna', {}).get('metrics', [])
+            score = metrics[0].get('cvssV3_0', {}).get('baseScore', '') if metrics else ''
+                    
+            # Access description value
+            descriptions = data.get('containers', {}).get('cna', {}).get('descriptions', [])
+            description = descriptions[0].get('value', '') if descriptions else ''
+            
+            # Check if CveID already exists in CSV data
+            cve_exists = False
+            for row in csv_data:
+                if row[0] == cve_id:
+                    row[1] = vendor
+                    row[2] = score
+                    row[3] = description
+                    cve_exists = True
+                    break
+            
+            # If CveID doesn't exist, create a new row
+            if not cve_exists:
+                new_row = [cve_id, vendor, score, description]
+                csv_data.append(new_row)
+    
+    # Sort CSV data based on CveID in ascending order
+    csv_data.sort(key=lambda x: x[0])
+    
+    # Remove the last row if it contains headers only
+    if last_row_header_only:
+        csv_data.pop()
+    else:
+        # If the last row is not headers only, remove it
+        # before appending the new row
+        csv_data.pop(-1)
+    
+    # Write the updated and sorted CSV data back to the file
+    with open(csv_file, 'w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(csv_data)
+
+    print("CVEs updated successfully!")
+
 def update_cve():
     # Define the URL and CSS selector
     url = "https://github.com/CVEProject/cvelistV5/releases"
@@ -149,6 +216,10 @@ def update_cve():
     with zipfile.ZipFile(zip_content, "r") as zip_ref:
         zip_ref.extractall("updatedCVE")
 
+    # Update CVECSV.csv file
+    update_csv_from_json()
+
+    # Update compiledCVE folder
     # Overwrites updated CVE files into compiledCVE folder
     move_files_update("updatedCVE/deltaCves", "compiledCVE")
 
@@ -204,7 +275,7 @@ def check_for_updates():
         # Updates Database every minute
         time.sleep(60)
 
-# Function to call the check_for_updates function in a separate thread
+# Function to call the check_for_updates function in a separate thread so GUI will not crash
 def run_update_checker():
     thread = threading.Thread(target=check_for_updates)
     thread.start()
@@ -277,9 +348,7 @@ def update():
     print("Update button clicked")
 
     # check_for_updates() will update CVEs properly, but GUI will not respond due to while loop
-    # check_for_updates()
-
-    # Use threading to call the function instead
+    # Use threading to call the function instead, run_update_checker()
     run_update_checker()
 
 
