@@ -138,8 +138,15 @@ def update_csv_from_json():
         reader = csv.reader(file)
         csv_data = list(reader)
     
-    # Check if the last row is the header row only
-    last_row_header_only = len(csv_data) > 0 and csv_data[-1][0] == 'CveID'
+    # Remove values from the last row
+    csv_data[-1] = ['' for _ in csv_data[-1]]
+    
+    # Find the index of the headers
+    headers = csv_data[0]
+    cve_id_index = headers.index('CveID')
+    vendor_index = headers.index('Vendor')
+    score_index = headers.index('Score')
+    description_index = headers.index('Description')
     
     for filename in os.listdir(json_folder):
         if filename.endswith('.json'):
@@ -163,11 +170,11 @@ def update_csv_from_json():
             
             # Check if CveID already exists in CSV data
             cve_exists = False
-            for row in csv_data:
-                if row[0] == cve_id:
-                    row[1] = vendor
-                    row[2] = score
-                    row[3] = description
+            for row in csv_data[1:]:
+                if row[cve_id_index] == cve_id:
+                    row[vendor_index] = vendor
+                    row[score_index] = score
+                    row[description_index] = description
                     cve_exists = True
                     break
             
@@ -179,20 +186,16 @@ def update_csv_from_json():
     # Sort CSV data based on CveID in ascending order
     csv_data.sort(key=lambda x: x[0])
     
-    # Remove the last row if it contains headers only
-    if last_row_header_only:
-        csv_data.pop()
-    else:
-        # If the last row is not headers only, remove it
-        # before appending the new row
-        csv_data.pop(-1)
-    
-    # Write the updated and sorted CSV data back to the file
+    # Write the updated CSV data back to the file
     with open(csv_file, 'w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
-        writer.writerows(csv_data)
+        writer.writerow(headers)  # Write the headers
+        writer.writerows(csv_data[1:-1])  # Write the data (excluding the headers row)
 
     print("CVEs updated successfully!")
+
+
+
 
 def update_cve():
     # Define the URL and CSS selector
