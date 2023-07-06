@@ -535,6 +535,8 @@ def show_toolcheck_page():
 
   
 def show_cvesearch_page():
+
+
     for child in page_frame.winfo_children():
         child.pack_forget()
     home_page.pack_forget()
@@ -656,8 +658,7 @@ def vendor_frequency_analysis(num_items):
 def show_analysis_page():
     print("Analysis Page Clicked")
     
-    # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
-    home_page.pack()
+    # Restore the visibility of label_toolcheck, and label_cvesearch
     label_toolcheck.pack()
     label_cvesearch.pack()
 
