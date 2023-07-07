@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font, filedialog, messagebox, simpledialog
+from tkinter import font, filedialog, messagebox, simpledialog, ttk, Scrollbar
 import docx
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -138,15 +138,8 @@ def update_csv_from_json():
         reader = csv.reader(file)
         csv_data = list(reader)
     
-    # Remove values from the last row
-    csv_data[-1] = ['' for _ in csv_data[-1]]
-    
-    # Find the index of the headers
-    headers = csv_data[0]
-    cve_id_index = headers.index('CveID')
-    vendor_index = headers.index('Vendor')
-    score_index = headers.index('Score')
-    description_index = headers.index('Description')
+    # Check if the last row is the header row only
+    last_row_header_only = len(csv_data) > 0 and csv_data[-1][0] == 'CveID'
     
     for filename in os.listdir(json_folder):
         if filename.endswith('.json'):
@@ -170,11 +163,11 @@ def update_csv_from_json():
             
             # Check if CveID already exists in CSV data
             cve_exists = False
-            for row in csv_data[1:]:
-                if row[cve_id_index] == cve_id:
-                    row[vendor_index] = vendor
-                    row[score_index] = score
-                    row[description_index] = description
+            for row in csv_data:
+                if row[0] == cve_id:
+                    row[1] = vendor
+                    row[2] = score
+                    row[3] = description
                     cve_exists = True
                     break
             
@@ -186,16 +179,20 @@ def update_csv_from_json():
     # Sort CSV data based on CveID in ascending order
     csv_data.sort(key=lambda x: x[0])
     
-    # Write the updated CSV data back to the file
+    # Remove the last row if it contains headers only
+    if last_row_header_only:
+        csv_data.pop()
+    else:
+        # If the last row is not headers only, remove it
+        # before appending the new row
+        csv_data.pop(-1)
+    
+    # Write the updated and sorted CSV data back to the file
     with open(csv_file, 'w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(headers)  # Write the headers
-        writer.writerows(csv_data[1:-1])  # Write the data (excluding the headers row)
+        writer.writerows(csv_data)
 
     print("CVEs updated successfully!")
-
-
-
 
 def update_cve():
     # Define the URL and CSS selector
@@ -533,53 +530,115 @@ def show_toolcheck_page():
     
     label_toolcheck.config(text=f"Windows Defender Status:\n{windows_defender_result}\n\n{firewall_result}", font=("Arial", 40))
 
-  
+def display_csv_data(data):
+    # Clear existing data in Treeview
+    show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
+
+    header = ['CveID', 'Vendor', 'Score', 'Description']
+    show_cvesearch_page.results_tree["columns"] = header
+
+    # Configure column names and properties
+    for col in header:
+        show_cvesearch_page.results_tree.heading(col, text=col)
+        show_cvesearch_page.results_tree.column(col, width=show_cvesearch_page.results_frame.winfo_width())
+
+    # Populate the Treeview with data rows
+    for row in data[1:]:
+        show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+    
+    # Bind double click event to the Treeview
+    show_cvesearch_page.results_tree.bind("<Double-1>", show_full_text)
+
+    
+def show_full_text(event):
+    item = show_cvesearch_page.results_tree.selection()[0]
+    description = show_cvesearch_page.results_tree.item(item, "values")[3]
+
+    # Create a new window to display the full text
+    full_text_window = tk.Toplevel()
+    full_text_window.title("Full Description")
+    full_text_label = tk.Label(full_text_window, text=description)
+    full_text_label.pack()
+
+    
 def show_cvesearch_page():
-
-
+    # Clear previous contents of the page
     for child in page_frame.winfo_children():
         child.pack_forget()
+
     home_page.pack_forget()
     label_analysis.pack_forget()
     label_toolcheck.pack_forget()
     label_cvesearch.pack(pady=20, side="top")
     cvesearch.pack(fill="both", expand=True)
 
-    # Create a frame for the search bar
-    search_frame = tk.Frame(cvesearch, bg="light blue")
-    search_frame.pack(side="top", fill="x")
+    # Check if search bar and results frame already exist
+    if hasattr(show_cvesearch_page, 'search_frame'):
+        show_cvesearch_page.search_frame.pack()
+    else:
+        # Create search bar
+        show_cvesearch_page.search_frame = tk.Frame(cvesearch, bg="light blue")
+        show_cvesearch_page.search_frame.pack(side="top", fill="x")
 
-    # Add search bar
-    search_label = tk.Label(search_frame, text="Search:", font=button_font, bg="light blue")
-    search_label.pack(side="left", padx=10)
+        # Add search bar
+        search_label = tk.Label(show_cvesearch_page.search_frame, text="Search:", font=button_font, bg="light blue")
+        search_label.pack(side="left", padx=10)
 
-    search_entry = tk.Entry(search_frame, font=button_font, width=30)
-    search_entry.pack(side="left", padx=10)
+        show_cvesearch_page.search_entry = tk.Entry(show_cvesearch_page.search_frame, font=button_font, width=30)
+        show_cvesearch_page.search_entry.pack(side="left", padx=10)
 
-    # Add sort by dropdown menu
-    sort_label = tk.Label(search_frame, text="Sort by:", font=button_font, bg="light blue")
-    sort_label.pack(side="left", padx=10)
+        # Add sort by dropdown menu
+        sort_label = tk.Label(show_cvesearch_page.search_frame, text="Sort by:", font=button_font, bg="light blue")
+        sort_label.pack(side="left", padx=10)
 
-    sort_var = tk.StringVar()
-    sort_options = ["CveID", "Vendor", "Score", "Description"]
-    sort_dropdown = tk.OptionMenu(search_frame, sort_var, *sort_options)
-    sort_dropdown.pack(side="left", padx=10)
+        show_cvesearch_page.sort_var = tk.StringVar()
+        sort_options = ["CveID", "Vendor", "Score", "Description"]
+        sort_dropdown = tk.OptionMenu(show_cvesearch_page.search_frame, show_cvesearch_page.sort_var, *sort_options)
+        sort_dropdown.pack(side="left", padx=10)
 
-    # Create a frame for the search results
-    results_frame = tk.Frame(cvesearch)
-    results_frame.pack(fill="both", expand=True)
+    if hasattr(show_cvesearch_page, 'results_frame'):
+        show_cvesearch_page.results_frame.pack()
+    else:
+        # Create results frame
+        show_cvesearch_page.results_frame = tk.Frame(cvesearch)
+        show_cvesearch_page.results_frame.pack(fill="both", expand=True)
 
-    # Create a Text widget to display the results
-    results_text = tk.Text(results_frame, font=button_font, bg="#f2f2f2", padx=10, pady=10)
-    results_text.pack(fill="both", expand=True)
+        # Create a Treeview widget to display the results
+        show_cvesearch_page.results_tree = ttk.Treeview(show_cvesearch_page.results_frame, show="headings")
+
+        # Create a horizontal scrollbar
+        # show_cvesearch_page.tree_x_scrollbar = ttk.Scrollbar(show_cvesearch_page.results_frame, orient="horizontal", command=show_cvesearch_page.results_tree.xview)
+
+        # Configure the scrollbar and Treeview
+        # show_cvesearch_page.results_tree.configure(xscrollcommand=show_cvesearch_page.tree_x_scrollbar.set)
+        show_cvesearch_page.results_tree.pack(fill="both", expand=True)
+        # show_cvesearch_page.tree_x_scrollbar.pack(side="bottom", fill="x")
+
+    # File Path
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    csv_filename = 'CVECSV.csv'
+    csv_file = os.path.join(dir_path, csv_filename)
+
+    # Read the CSV file and update the data
+    with open(csv_file, "r", encoding="utf-8") as file:
+        reader = csv.reader(file)
+        data = list(reader)
+
+    display_csv_data(data)
 
     def search_cve_wrapper():
-        search_text = search_entry.get()
-        sort_by = sort_var.get()
-        search_cve(search_text, sort_by, results_text)
+        search_text = show_cvesearch_page.search_entry.get()
+        sort_by = show_cvesearch_page.sort_var.get()
+        search_cve(search_text, sort_by, show_cvesearch_page.results_tree)
 
-    search_button = tk.Button(search_frame, text="Search", command=search_cve_wrapper, **button_style)
-    search_button.pack(side="left", padx=10)
+    # Create search button if it doesn't exist
+    if not hasattr(show_cvesearch_page, 'search_button'):
+        show_cvesearch_page.search_button = tk.Button(show_cvesearch_page.search_frame, text="Search", command=search_cve_wrapper, **button_style)
+        show_cvesearch_page.search_button.pack(side="left", padx=10)
+
+    # Forget and re-pack the search button to ensure it is displayed correctly
+    show_cvesearch_page.search_button.pack_forget()
+    show_cvesearch_page.search_button.pack(side="left", padx=10)
 
 
 def search_cve(search_text, sort_by=None, results_text=None):
@@ -658,7 +717,8 @@ def vendor_frequency_analysis(num_items):
 def show_analysis_page():
     print("Analysis Page Clicked")
     
-    # Restore the visibility of label_toolcheck, and label_cvesearch
+    # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
+    home_page.pack()
     label_toolcheck.pack()
     label_cvesearch.pack()
 
@@ -723,8 +783,6 @@ def create_bar_chart():
         bar_chart.draw()
         bar_chart.get_tk_widget().pack(fill='both', expand=True)
         bar_chart_created = True
-
-
 
 # Create the Page 1
 toolcheck = tk.Frame(page_frame, bg="light blue")
