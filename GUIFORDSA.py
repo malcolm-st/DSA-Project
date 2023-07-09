@@ -778,10 +778,10 @@ def vendor_frequency_analysis(num_items):
 def show_analysis_page():
     print("Analysis Page Clicked")
     
-    # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
-    home_page.pack()
-    label_toolcheck.pack()
-    label_cvesearch.pack()
+    # # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
+    # home_page.pack()
+    # label_toolcheck.pack()
+    # label_cvesearch.pack()
 
     # Hide label_analysis and analysis widgets
     label_analysis.pack_forget()
