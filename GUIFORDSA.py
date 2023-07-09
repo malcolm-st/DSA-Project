@@ -24,6 +24,9 @@ import threading
 # json to csv imports
 import json
 
+# for URL openings
+import webbrowser
+
 from tkinter import *
 from SystemChecker import *
 
@@ -548,23 +551,52 @@ def show_toolcheck_page():
 #############################################################################################
 
 def display_csv_data(data):
-    # Clear existing data in Treeview
+    # Clear previous rows
     show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
 
-    header = ['CveID', 'Vendor', 'Score', 'Description']
-    show_cvesearch_page.results_tree["columns"] = header
-
-    # Configure column names and properties
-    column_widths = [10, 10, 10, 400]  # Specify the width for each column
-    column_min_widths = [100, 100, 100, 2500]  # Specify the minimum width for each column
-
-    for i, col in enumerate(header):
+    # Insert column headings
+    column_headings = data[0]
+    show_cvesearch_page.results_tree["columns"] = column_headings
+    for col in column_headings:
         show_cvesearch_page.results_tree.heading(col, text=col)
-        show_cvesearch_page.results_tree.column(col, width=column_widths[i], minwidth=column_min_widths[i])
+        show_cvesearch_page.results_tree.column(col, width=150)
 
-    # Populate the Treeview with data rows
+    # Insert data rows
     for row in data[1:]:
-        show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+        show_cvesearch_page.results_tree.insert("", "end", values=row)
+
+    # Bind click event to open URL
+    def open_cve_url(event):
+        selected_row = show_cvesearch_page.results_tree.focus()
+        cve_id = show_cvesearch_page.results_tree.item(selected_row)["values"][0]
+        url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
+
+        # Ask for confirmation using a popup message box
+        confirmation = messagebox.askyesno(
+            "Confirmation",
+            f"View more information about {cve_id} in another browser?"
+        )
+
+        if confirmation:
+            webbrowser.open(url)
+
+    # Add click event binding for rows in "CveID" column
+    show_cvesearch_page.results_tree.bind("<<TreeviewSelect>>", open_cve_url)
+
+    # Configure the "cve_id_click" tag
+    show_cvesearch_page.results_tree.tag_configure("cve_id_click", foreground="blue")
+
+    # Configure the row style for the "cve_id_click" tag
+    show_cvesearch_page.results_tree.tag_configure("cve_id_click_row", font="-underline")
+
+    # Tag the rows in "CveID" column
+    for row_id in show_cvesearch_page.results_tree.get_children():
+        cve_id = show_cvesearch_page.results_tree.item(row_id)["values"][0]
+        if cve_id != "":
+            show_cvesearch_page.results_tree.item(row_id, tags=("cve_id_click",))
+            show_cvesearch_page.results_tree.tag_add("cve_id_click_row", row_id)
+
+
     
 def show_cvesearch_page():
     # Clear previous contents of the page
