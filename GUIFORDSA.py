@@ -13,6 +13,7 @@ import os
 import subprocess
 import shutil
 from tqdm import tqdm
+from threading import Thread
 
 # update imports
 import requests
@@ -436,6 +437,44 @@ def retrieve_data():
     # Close the progress bar
     progress_bar.close()
 
+    # Signal that the retrieval process is complete
+    retrieval_complete.set(True)
+
+def check_retrieval_status():
+    if retrieval_complete.get():
+        # Show success message
+        success_label.config(text="Retrieve Data Successful")
+        # Destroy the loading window
+        loading_window.destroy()
+    else:
+        # Continue checking the status after 100ms
+        root.after(100, check_retrieval_status)
+
+def open_loading_window():
+    global loading_window, success_label, retrieval_complete
+    loading_window = tk.Toplevel(root)
+    loading_window.title("Loading...")
+    loading_window.geometry("400x100")
+    loading_window.resizable(False, False)
+
+    progress_label = ttk.Label(loading_window, text="Retrieving data...")
+    progress_label.pack(pady=10)
+
+    progress_bar = ttk.Progressbar(loading_window, mode="indeterminate", length=350)
+    progress_bar.pack(pady=10)
+    progress_bar.start()
+
+    success_label = ttk.Label(loading_window, text="")
+    success_label.pack(pady=10)
+
+    retrieval_complete = tk.BooleanVar()
+    retrieval_complete.set(False)
+
+    loading_thread = Thread(target=retrieve_data)
+    loading_thread.start()
+
+    check_retrieval_status()
+
 def show_page(page):
     page.tkraise()
 
@@ -481,7 +520,7 @@ button_style = {
 update_button = tk.Button(home_page, text="Update", command=update, **button_style)
 update_button.pack(pady=10)
 
-retrieve_button = tk.Button(home_page, text="Retrieve Data", command=retrieve_data, **button_style)
+retrieve_button = tk.Button(home_page, text="Retrieve Data", command=open_loading_window, **button_style)
 retrieve_button.pack(pady=10)
 
 # def check_windows_defender_settings():
