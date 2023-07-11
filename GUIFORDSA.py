@@ -1,5 +1,5 @@
 import tkinter as tk
-import tkinter.ttk as ttk
+# import tkinter.ttk as ttk
 from tkinter import font, filedialog, messagebox, simpledialog, ttk, Scrollbar
 import docx
 import pandas as pd
@@ -33,13 +33,14 @@ from tkinter import *
 from SystemChecker import *
 from VendorAnalysis import *
 from UpdateCVE import *
+from RetrieveCVE import *
 
-# Global flag variable
+# Global flag variable (for update)
 is_program_running = True
 
-# Clone the repository to a local folder
-repo_url = "https://github.com/CVEProject/cvelistV5.git"
-local_folder = "scrapedCVE"
+# # Clone the repository to a local folder
+# repo_url = "https://github.com/CVEProject/cvelistV5.git"
+# local_folder = "scrapedCVE"
 
 bar_chart_created = False
 bar_chart = None
@@ -74,48 +75,50 @@ bar_chart = None
 
 #     return merged
 
-# Pull CVE database
-def pull_cves(progress_bar):
-    git.Repo.clone_from(repo_url, local_folder)
-    progress_bar.update(1)
+# # Pull CVE database
+# def pull_cves(progress_bar):
+#     git.Repo.clone_from(repo_url, local_folder)
+#     progress_bar.update(1)
 
-# Delete directories/files
-def remove_folders_files(directory, progress_bar):
-    # Iterate over all items in the directory
-    for item in os.listdir(directory):
-        item_path = os.path.join(directory, item)
-        # If the item is a file
-        if os.path.isfile(item_path):
-            # Remove the file
-            os.remove(item_path)
-        # If the item is a directory
-        else:
-            # Check if the directory is not "cves"
-            if item != "cves":
-                # Construct the system command to remove directories
-                command = 'rd /s /q "{}"'.format(item_path)
-                # Execute the command using subprocess
-                subprocess.run(command, shell=True)
-    progress_bar.update(1)
+# # Delete directories/files
+# def remove_folders_files(directory, progress_bar):
+#     # Iterate over all items in the directory
+#     for item in os.listdir(directory):
+#         item_path = os.path.join(directory, item)
+#         # If the item is a file
+#         if os.path.isfile(item_path):
+#             # Remove the file
+#             os.remove(item_path)
+#         # If the item is a directory
+#         else:
+#             # Check if the directory is not "cves"
+#             if item != "cves":
+#                 # Construct the system command to remove directories
+#                 command = 'rd /s /q "{}"'.format(item_path)
+#                 # Execute the command using subprocess
+#                 subprocess.run(command, shell=True)
+#     progress_bar.update(1)
 
-def move_files(source_directory, destination_directory, progress_bar):
-    if not os.path.exists("compiledCVE"):
-        os.makedirs("compiledCVE")
+# def move_files(source_directory, destination_directory, progress_bar):
+#     if not os.path.exists("compiledCVE"):
+#         os.makedirs("compiledCVE")
 
-    # Retrieve the list of items in the source directory
-    items = os.listdir(source_directory)
+#     # Retrieve the list of items in the source directory
+#     items = os.listdir(source_directory)
 
-    # Iterate over all items in the source directory
-    for item in items:
-        item_path = os.path.join(source_directory, item)
-        # Check if the item is a file
-        if os.path.isfile(item_path):
-            # Move the file to the destination directory
-            shutil.move(item_path, destination_directory)
-        # Check if the item is a directory
-        elif os.path.isdir(item_path):
-            # Recursively move files in the sub-directory
-            move_files(item_path, destination_directory, progress_bar)
+#     # Iterate over all items in the source directory
+#     for item in items:
+#         item_path = os.path.join(source_directory, item)
+#         # Check if the item is a file
+#         if os.path.isfile(item_path):
+#             # Move the file to the destination directory
+#             shutil.move(item_path, destination_directory)
+#         # Check if the item is a directory
+#         elif os.path.isdir(item_path):
+#             # Recursively move files in the sub-directory
+#             move_files(item_path, destination_directory, progress_bar)
+
+            
 
 # def move_files_update(source_directory, destination_directory):
 #     # if not os.path.exists("testmove"):
@@ -400,6 +403,47 @@ def update():
     # update_csv_from_json()
 
 
+# def retrieve_data():
+#     print("Retrieve Data button clicked")
+#     # Create a progress bar
+#     total_steps = 4
+#     progress_bar = tqdm(total=total_steps, unit="step")
+
+#     if not os.path.exists("scrapedCVE"):
+#         os.makedirs("scrapedCVE")
+
+#     # Retrieve CVEs from database
+#     pull_cves(progress_bar)
+
+#     # Call the function to remove folders and files
+#     remove_folders_files(local_folder, progress_bar)
+
+#     # Call the function to move files
+#     move_files("scrapedCVE/cves", "compiledCVE", progress_bar)
+
+#     # Removes original scrapedCVE folder
+#     shutil.rmtree("scrapedCVE")
+#     progress_bar.update(1)
+
+#     # Convert .json files into a single CVECSV.csv files
+#     # Provide the folder containing JSON files and the desired CSV file
+#     dir_path = os.path.dirname(os.path.realpath(__file__))
+#     json_filename = 'compiledCVE'
+#     csv_filename = 'CVECSV.csv'
+#     json_folder = os.path.join(dir_path, json_filename)
+#     csv_file = os.path.join(dir_path, csv_filename)
+
+#     json_to_csv(json_folder, csv_file)
+
+#     progress_bar.update(1)
+
+#     # Close the progress bar
+#     progress_bar.close()
+
+#     # Signal that the retrieval process is complete
+#     retrieval_complete.set(True)
+
+# For retrieval
 def retrieve_data():
     print("Retrieve Data button clicked")
     # Create a progress bar
@@ -411,16 +455,18 @@ def retrieve_data():
 
     # Retrieve CVEs from database
     pull_cves(progress_bar)
+    # progress_bar.update(1)
 
     # Call the function to remove folders and files
     remove_folders_files(local_folder, progress_bar)
+    # progress_bar.update(1)
 
     # Call the function to move files
     move_files("scrapedCVE/cves", "compiledCVE", progress_bar)
 
     # Removes original scrapedCVE folder
     shutil.rmtree("scrapedCVE")
-    progress_bar.update(1)
+    # progress_bar.update(1)
 
     # Convert .json files into a single CVECSV.csv files
     # Provide the folder containing JSON files and the desired CSV file
@@ -446,6 +492,7 @@ def check_retrieval_status():
         success_label.config(text="Retrieve Data Successful")
         # Destroy the loading window
         loading_window.destroy()
+        
     else:
         # Continue checking the status after 100ms
         root.after(100, check_retrieval_status)
@@ -470,6 +517,7 @@ def open_loading_window():
     retrieval_complete = tk.BooleanVar()
     retrieval_complete.set(False)
 
+    # from RetrieveCVE import retrieve_data
     loading_thread = Thread(target=retrieve_data)
     loading_thread.start()
 

@@ -8,6 +8,7 @@ import os
 import shutil
 import json
 import csv
+# from GUIFORDSA import is_program_running
 
 #############################################################################################
 #######################                                            ##########################
@@ -161,6 +162,7 @@ def update_cve():
 
 # Indefinitely check for updates
 def check_for_updates():
+    from GUIFORDSA import is_program_running
     # Define the repository details
     username = "CVEProject"
     repository = "cvelistV5"
