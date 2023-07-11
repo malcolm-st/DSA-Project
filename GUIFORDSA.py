@@ -830,6 +830,46 @@ def search_cve(search_text, sort_by=None, results_text=None):
     results_text.insert(tk.END, filtered_data.to_string(index=False))
 
 
+def extract_data_keyword(keyword, file_path):
+    matching_data = []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if keyword in row[3]:
+                matching_data.append(row[0])  # Exclude the first column (CVE ID)
+    return matching_data
+
+def extract_data_cve(cve_id, file_path):
+    matching_data = []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+
+        # Sort the rows based on the first column (CVE ID)
+        sorted_rows = sorted(rows, key=lambda x: x[0])
+
+        jump_size = int(len(sorted_rows) ** 0.5)
+
+        # Jump algorithm for CVE search
+        for i in range(0, len(sorted_rows), jump_size):
+            if cve_id in sorted_rows[i][0]:
+                matching_data.append(sorted_rows[i][0])
+
+                # Linear search in the block
+                for j in range(i + 1, min(i + jump_size + 1, len(sorted_rows))):
+                    if cve_id in sorted_rows[j][0]:
+                        matching_data.append(sorted_rows[j][0])
+
+        # If no matches found, perform a standard linear search
+        if not matching_data:
+            for row in rows:
+                if cve_id in row[0]:
+                    matching_data.append(row[0])
+
+    return matching_data
+
+
+
 # Analysis Page
 def show_analysis_page():
     print("Analysis Page Clicked")
