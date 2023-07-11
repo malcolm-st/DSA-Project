@@ -1,4 +1,3 @@
-# update imports
 import requests
 from bs4 import BeautifulSoup
 import zipfile
@@ -10,6 +9,11 @@ import shutil
 import json
 import csv
 
+#############################################################################################
+#######################                                            ##########################
+#######################             Update CVE for App             ##########################
+#######################                                            ##########################
+#############################################################################################
 
 def move_files_update(source_directory, destination_directory):
     # if not os.path.exists("testmove"):
