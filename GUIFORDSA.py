@@ -44,6 +44,7 @@ is_program_running = True
 
 bar_chart_created = False
 bar_chart = None
+cache = {}
 
 # def merge_sort(arr):
 #     if len(arr) <= 1:
@@ -743,6 +744,28 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
+def all_search(search_query, csv_filename):
+    # Check if search query exists in the cache
+    if search_query in cache:
+        print("Retrieving results from cache...")
+        return cache[search_query]
+
+    # Read CSV file and perform search
+    data = pd.read_csv(csv_filename, encoding='utf-8')
+    search_query = str(search_query).lower()
+    filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+    results = filtered_data.values.tolist()
+
+    # Cache the results
+    cache[search_query] = results
+
+    # Check cache size and clear if necessary
+    if len(cache) > 100:
+        print("Clearing cache...")
+        cache.clear()
+
+    return results
+
 def upload():
     file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", "*.docx"), ("Text Files", "*.txt")])
     rows_to_display = []  # create an empty list to store the results
@@ -828,46 +851,6 @@ def search_cve(search_text, sort_by=None, results_text=None):
 
     # Display the filtered results in the Text widget
     results_text.insert(tk.END, filtered_data.to_string(index=False))
-
-
-def extract_data_keyword(keyword, file_path):
-    matching_data = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if keyword in row[3]:
-                matching_data.append(row[0])  # Exclude the first column (CVE ID)
-    return matching_data
-
-def extract_data_cve(cve_id, file_path):
-    matching_data = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        rows = list(reader)
-
-        # Sort the rows based on the first column (CVE ID)
-        sorted_rows = sorted(rows, key=lambda x: x[0])
-
-        jump_size = int(len(sorted_rows) ** 0.5)
-
-        # Jump algorithm for CVE search
-        for i in range(0, len(sorted_rows), jump_size):
-            if cve_id in sorted_rows[i][0]:
-                matching_data.append(sorted_rows[i][0])
-
-                # Linear search in the block
-                for j in range(i + 1, min(i + jump_size + 1, len(sorted_rows))):
-                    if cve_id in sorted_rows[j][0]:
-                        matching_data.append(sorted_rows[j][0])
-
-        # If no matches found, perform a standard linear search
-        if not matching_data:
-            for row in rows:
-                if cve_id in row[0]:
-                    matching_data.append(row[0])
-
-    return matching_data
-
 
 
 # Analysis Page
