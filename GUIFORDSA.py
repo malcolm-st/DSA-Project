@@ -723,12 +723,12 @@ def show_cvesearch_page():
         reader = csv.reader(file)
         data = list(reader)
 
-    display_csv_data(data) 
+    display_csv_data(data)
 
     def search_cve_wrapper():
         search_text = show_cvesearch_page.search_entry.get()
-        sort_by = show_cvesearch_page.sort_var.get()
-        search_cve(search_text, sort_by, show_cvesearch_page.results_tree)
+        results = all_search(search_text, 'CVECSV.csv')
+        display_csv_data(results)
 
     # # Create search button if it doesn't exist
     if not hasattr(show_cvesearch_page, 'search_button'):
