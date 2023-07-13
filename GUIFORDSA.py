@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import csv
+import win32api
 
 # retrieve imports
 import git
@@ -213,10 +214,16 @@ def show_page(page):
 root = tk.Tk()
 root.title("CVE Aggregator")
 
-
-# Get the screen width and height
-screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
+screen_width= root.winfo_screenwidth()
+
+taskbar_height = win32api.GetSystemMetrics(1) if screen_height > win32api.GetSystemMetrics(1) else 0
+window_x = 0
+window_y = taskbar_height
+
+root.geometry(f"{screen_width}x{screen_height}+{window_x}+{window_y}")
+
+root.attributes("-topmost", True)
 
 # Calculate the font size based on the screen height
 title_font_size = int(screen_height / 20)
