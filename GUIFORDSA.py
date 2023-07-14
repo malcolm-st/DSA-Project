@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import csv
 import win32api
+import win32gui
 
 # retrieve imports
 import git
@@ -214,16 +215,19 @@ def show_page(page):
 root = tk.Tk()
 root.title("CVE Aggregator")
 
+# Get the screen dimensions
+screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-screen_width= root.winfo_screenwidth()
 
-taskbar_height = win32api.GetSystemMetrics(1) if screen_height > win32api.GetSystemMetrics(1) else 0
+# Calculate the window position to appear right above the taskbar
+taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
+taskbar_rect = win32gui.GetWindowRect(taskbar_hwnd)
+taskbar_height = taskbar_rect[1] - taskbar_rect[3]
 window_x = 0
-window_y = taskbar_height
+window_y = screen_height - (screen_height-taskbar_height)
 
-root.geometry(f"{screen_width}x{screen_height}+{window_x}+{window_y}")
-
-root.attributes("-topmost", True)
+# Set the window size and position using geometry()
+root.geometry(f"{screen_width}x{screen_height-taskbar_height}+{window_x}+{window_y}")
 
 # Calculate the font size based on the screen height
 title_font_size = int(screen_height / 20)
