@@ -266,6 +266,66 @@ update_button.pack(pady=10)
 retrieve_button = tk.Button(home_page, text="Retrieve Data", command=open_loading_window, **button_style)
 retrieve_button.pack(pady=10)
 
+#############################################################################################
+#######################                                            ##########################
+#######################                 Year Analysis              ##########################
+#######################                                            ##########################
+#############################################################################################
+
+def create_year_chart(show_year_page):
+    # Check if the chart attribute exists in the year frame
+    chart_attribute_exists = hasattr(year, "chart")
+
+    if chart_attribute_exists:
+        # If the attribute exists, remove the previous chart
+        year.chart.get_tk_widget().pack_forget()
+    else:
+        # If the attribute doesn't exist, create it
+        year.chart = None
+
+    # Load the CSV file into a pandas DataFrame
+    df = pd.read_csv('CVECSV.csv')
+
+    # Extract the year from the CVE ID
+    df['Year'] = df['CveID'].str.extract(r'CVE-(\d{4})-\d+')
+
+    # Count the number of CVEs for each year
+    year_counts = df['Year'].value_counts()
+
+    # Find the top five years with the most CVEs
+    top_five_years = year_counts.nlargest(5).sort_values()
+
+    # Display the CVE details for the top five years
+    top_five_years_cves = df[df['Year'].isin(top_five_years.index)]
+
+    # Create a bar chart of the top five years with the most CVEs
+    fig, ax = plt.subplots()
+    ax.bar(top_five_years.index, top_five_years.values)
+    ax.set_xlabel('Year')
+    ax.set_ylabel('Number of CVEs')
+    ax.set_title('Top Five Years with the Most CVEs')
+
+    # Embed the Matplotlib graph in the Year Page
+    canvas = FigureCanvasTkAgg(fig, master=year)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
+
+    # Assign the chart attribute in the year frame
+    year.chart = canvas
+
+def show_year_page():
+    label_year.pack_forget()
+    year.pack_forget()
+
+    for child in page_frame.winfo_children():
+        child.pack_forget()
+    home_page.pack_forget()
+    label_toolcheck.pack_forget()
+    #label_cvesearch.pack_forget()
+    label_year.pack(pady=20, side="top")
+    year.pack(fill="both", expand=True)
+
+    create_year_chart(show_year_page)
 
 #############################################################################################
 #######################                                            ##########################
@@ -610,6 +670,7 @@ def show_home_page():
     toolcheck.pack_forget()
     cvesearch.pack_forget()
     analysis.pack_forget()
+    year.pack_forget()
     home_page.pack(fill="both", expand=True)   
 
 def create_bar_chart():
@@ -633,6 +694,7 @@ def create_bar_chart():
         bar_chart.get_tk_widget().pack(fill='both', expand=True)
         bar_chart_created = True
 
+
 # Create the Page 1
 toolcheck = tk.Frame(page_frame, bg="light blue")
 label_toolcheck = tk.Label(toolcheck, text="System Security Checker", font=title_font, bg="#f2f2f2")
@@ -644,6 +706,10 @@ cvesearch = tk.Frame(page_frame, bg="light blue")
 analysis = tk.Frame(page_frame, bg="light blue")
 label_analysis = tk.Label(analysis, text="Vendor Analysis", font=title_font, bg="#f2f2f2")
 
+# Create year frame
+year = tk.Frame(page_frame, bg="light blue")
+label_year = tk.Label(year, text="Year Analysis", font=title_font, bg="#f2f2f2")
+
 # Create navigation buttons
 nav_frame = tk.Frame(root, bg="#f2f2f2")
 nav_frame.pack(side="bottom", pady=10)
@@ -654,12 +720,14 @@ home_button.pack(side="left", padx=10)
 page1_button = tk.Button(nav_frame, text="System Security Checker", command=show_toolcheck_page, **button_style)
 page1_button.pack(side="left", padx=10)
 
-
 page2_button = tk.Button(nav_frame, text="CVE Search", command=show_cvesearch_page, **button_style)
 page2_button.pack(side="left", padx=10)
 
 page3_button = tk.Button(nav_frame, text="Vendor Analysis", command=show_analysis_page, **button_style)
 page3_button.pack(side="left", padx=10)
+
+page4_button = tk.Button(home_page, text="Year Analysis", command=show_year_page, **button_style)
+page4_button.pack(pady=10)
 
 root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full screen
 
