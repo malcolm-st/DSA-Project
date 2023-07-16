@@ -504,6 +504,7 @@ def all_search(search_query, csv_filename):
 
     return results
 
+
 def upload():
     file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", "*.docx"), ("Text Files", "*.txt")])
     rows_to_display = []  # create an empty list to store the results
@@ -511,12 +512,15 @@ def upload():
     for file_path in file_paths:
         if file_path.endswith(".docx") or file_path.endswith(".txt"):
             # call the search_csv_by_id function and append the results to the list
-            rows_to_display += search_csv_by_id(file_path, 'D:/SIT/Y1S3/INF1008/Project/output.csv')
+            rows_to_display += search_csv_by_id(file_path, 'CVECSV.csv')
         else:
             print("Invalid file format. Please upload a DOCX or TXT file.")
 
     # call the display_csv_data function with the accumulated results
     display_csv_data(rows_to_display, uploaded=True)
+    
+    export_button = tk.Button(return_frame, text="Export",  command=lambda: export_to_csv(rows_to_display), **button_style)
+    export_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
 def search_csv_by_id(file_path, csv_file):
     # Initialize an empty list to store the IDs
@@ -578,6 +582,33 @@ def search_csv_by_id(file_path, csv_file):
     # Return the list of rows to display
     return rows_to_display
 
+def export_to_csv(rows_to_display):
+
+    if not rows_to_display:
+        print("No data to save. Please ensure that the fields are outputted before exporting.")
+        return
+
+    # Open a save file dialog
+    file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
+    
+    if not file_path:
+        # The user cancelled the dialog
+        return
+    
+    # Open the selected file in write mode
+    with open(file_path, 'w', newline='') as csvfile:
+        # Create a CSV writer object
+        writer = csv.writer(csvfile)
+        
+        # Write the header row
+        writer.writerow(["CveID", "Other columns..."])  # replace this with your actual column names
+        
+        # Write the rows
+        for row in rows_to_display:
+            writer.writerow(row)
+    
+    print(f"Data has been successfully saved to {file_path}.")
+
 def show_full_text(event):
     item = show_cvesearch_page.results_tree.selection()[0]
     description = show_cvesearch_page.results_tree.item(item, "values")[3]
@@ -621,7 +652,6 @@ def search_cve(search_text, sort_by=None, results_text=None):
 
     # Display the filtered results in the Text widget
     results_text.insert(tk.END, filtered_data.to_string(index=False))
-
 
 # Analysis Page
 def show_analysis_page():
@@ -735,9 +765,9 @@ root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full scre
 return_frame = tk.Frame(cvesearch, bg="light blue")
 return_frame.pack(side="bottom", fill="x")
     
-# Add the Reset button
 return_button = tk.Button(return_frame, text="Reset Filters", command=show_cvesearch_page, **button_style)
-return_button.pack(pady=10)
+return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+
 
 # Set initial page
 show_page(home_page)
