@@ -428,6 +428,11 @@ def show_cvesearch_page():
         sort_dropdown = tk.OptionMenu(show_cvesearch_page.search_frame, show_cvesearch_page.sort_var, *sort_options)
         sort_dropdown.pack(side="left", padx=10)
 
+     # remove the export_button from the return_frame
+    if hasattr(return_frame, 'export_button'):
+        return_frame.export_button.pack_forget()
+        del return_frame.export_button
+
     if hasattr(show_cvesearch_page, 'results_frame'):
         show_cvesearch_page.results_frame.pack()
     else:
@@ -482,14 +487,19 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
-def all_search(search_query, csv_filename):
+def all_search(search_query=None, csv_filename=None, uploaded=False, uploaded_data=None):
     # Check if search query exists in the cache
     if search_query in cache:
         print("Retrieving results from cache...")
         return cache[search_query]
 
-    # Read CSV file and perform search
-    data = pd.read_csv(csv_filename, encoding='utf-8')
+    if uploaded:
+        # Perform search on uploaded data
+        data = pd.DataFrame(uploaded_data)
+    else:
+        # Read CSV file and perform search
+        data = pd.read_csv(csv_filename, encoding='utf-8')
+
     search_query = str(search_query).lower()
     filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
     results = filtered_data.values.tolist()
@@ -505,22 +515,29 @@ def all_search(search_query, csv_filename):
     return results
 
 
+rows_to_display = []  # create a global variable to store the rows_to_display list
+
 def upload():
-    file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", "*.docx"), ("Text Files", "*.txt")])
-    rows_to_display = []  # create an empty list to store the results
+    global rows_to_display  # use the global keyword to access the global rows_to_display variable
+    file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", ".docx"), ("Text Files", ".txt")])
+    rows_to_display = []  # reset the rows_to_display list
 
     for file_path in file_paths:
         if file_path.endswith(".docx") or file_path.endswith(".txt"):
             # call the search_csv_by_id function and append the results to the list
             rows_to_display += search_csv_by_id(file_path, 'CVECSV.csv')
+            
+            display_csv_data(rows_to_display, uploaded=True)
+
+            if not hasattr(return_frame, 'export_button'): 
+                export_button = tk.Button(return_frame, text="Export", command=lambda: export_to_csv(rows_to_display), **button_style)
+                export_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+                return_frame.export_button = export_button  # set the export_button attribute on the return_frame object
+            else:
+                return_frame.export_button.pack()
+
         else:
             print("Invalid file format. Please upload a DOCX or TXT file.")
-
-    # call the display_csv_data function with the accumulated results
-    display_csv_data(rows_to_display, uploaded=True)
-    
-    export_button = tk.Button(return_frame, text="Export",  command=lambda: export_to_csv(rows_to_display), **button_style)
-    export_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
 def search_csv_by_id(file_path, csv_file):
     # Initialize an empty list to store the IDs
@@ -601,7 +618,7 @@ def export_to_csv(rows_to_display):
         writer = csv.writer(csvfile)
         
         # Write the header row
-        writer.writerow(["CveID", "Other columns..."])  # replace this with your actual column names
+        writer.writerow(["CveID", "Vendor", "Score", "Description"])  
         
         # Write the rows
         for row in rows_to_display:
