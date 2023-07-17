@@ -645,7 +645,11 @@ def show_analysis_page():
     analysis.pack_forget()
 
     # Ask for number of items
-    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display:")
+    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display (Max 20):")
+
+    # Ensures num_items is between 1 to 20 inclusive. Prompts user to re-key the value again if too large
+    while num_items > 20 or num_items < 1:
+        num_items = simpledialog.askinteger("Number of vendors", "The value you have entered is not valid.\n\nEnter the number of vendors to display (Max 20):")
     
     if num_items is None:
         return
