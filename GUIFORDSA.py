@@ -48,8 +48,24 @@ is_program_running = True
 bar_chart_created = False
 bar_chart = None
 cache = {}
+uploaded=False
+rows_to_display = []
 
+def update_upload_status():
+    # Access the global variable
+    global uploaded
 
+    if uploaded:
+        uploaded = False
+        show_cvesearch_page()
+    # Modify the global variable
+    else:
+        uploaded = True
+
+# Call the function to update the global variable
+
+def get_rows_to_display():
+    return rows_to_display
 
 def display_docx_content(file_path):
     doc = docx.Document(file_path)
@@ -324,7 +340,7 @@ def open_url(event):
     if confirmed:
         webbrowser.open_new(url)
 
-def display_csv_data(data, uploaded):
+def display_csv_data(data):
     # Clear existing data in Treeview
     show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
 
@@ -427,12 +443,7 @@ def show_cvesearch_page():
         reader = csv.reader(file)
         data = list(reader)
 
-    display_csv_data(data, uploaded=False) 
-
-    def search_cve_wrapper():
-        search_text = show_cvesearch_page.search_entry.get()
-        results = all_search(search_text, 'CVECSV.csv')
-        display_csv_data(results, uploaded=False)
+    display_csv_data(data)
 
     # # Create search button if it doesn't exist
     if not hasattr(show_cvesearch_page, 'search_button'):
@@ -448,37 +459,45 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
-def all_search(search_query=None, csv_filename=None, uploaded=False, uploaded_data=None):
-    # Check if search query exists in the cache
-    if search_query in cache:
-        print("Retrieving results from cache...")
-        return cache[search_query]
-
+def search_cve_wrapper():
+    search_text = show_cvesearch_page.search_entry.get()
+    print(uploaded)
     if uploaded:
-        # Perform search on uploaded data
-        data = pd.DataFrame(uploaded_data)
+        all_search(search_text, get_rows_to_display())
+
     else:
-        # Read CSV file and perform search
-        data = pd.read_csv(csv_filename, encoding='utf-8')
+        all_search(search_text, None)
+
+def all_search(search_query, uploaded_data):
+    # Check if search query exists in the cache
+    #if search_query in cache:
+    #    print("Retrieving results from cache...")
+    #   return cache[search_query]
+
+    # Read CSV file and perform search
+    if uploaded_data:
+        data = pd.DataFrame(uploaded_data)
+        print("Here!")
+
+
+    else:
+        data = pd.read_csv('CVECSV.csv', encoding='utf-8')
 
     search_query = str(search_query).lower()
     filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
     results = filtered_data.values.tolist()
-
     # Cache the results
-    cache[search_query] = results
+    #cache[search_query] = results
 
     # Check cache size and clear if necessary
-    if len(cache) > 100:
-        print("Clearing cache...")
-        cache.clear()
+    #if len(cache) > 100:
+    #    print("Clearing cache...")
+    #    cache.clear()
 
-    return results
-
-
-rows_to_display = []  # create a global variable to store the rows_to_display list
+    display_csv_data(results)
 
 def upload():
+    global uploaded
     global rows_to_display  # use the global keyword to access the global rows_to_display variable
     file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", ".docx"), ("Text Files", ".txt")])
     rows_to_display = []  # reset the rows_to_display list
@@ -487,8 +506,10 @@ def upload():
         if file_path.endswith(".docx") or file_path.endswith(".txt"):
             # call the search_csv_by_id function and append the results to the list
             rows_to_display += search_csv_by_id(file_path, 'CVECSV.csv')
-            
-            display_csv_data(rows_to_display, uploaded=True)
+
+            display_csv_data(rows_to_display)
+            if not uploaded:
+                update_upload_status()
 
             if not hasattr(return_frame, 'export_button'): 
                 export_button = tk.Button(return_frame, text="Export", command=lambda: export_to_csv(rows_to_display), **button_style)
@@ -747,7 +768,7 @@ root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full scre
 return_frame = tk.Frame(cvesearch, bg="light blue")
 return_frame.pack(side="bottom", fill="x")
     
-return_button = tk.Button(return_frame, text="Reset Filters", command=show_cvesearch_page, **button_style)
+return_button = tk.Button(return_frame, text="Reset Filters", command=update_upload_status, **button_style)
 return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
 
