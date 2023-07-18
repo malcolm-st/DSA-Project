@@ -470,31 +470,38 @@ def search_cve_wrapper():
 
 def all_search(search_query, uploaded_data):
     # Check if search query exists in the cache
-    #if search_query in cache:
-    #    print("Retrieving results from cache...")
-    #   return cache[search_query]
+
 
     # Read CSV file and perform search
     if uploaded_data:
         data = pd.DataFrame(uploaded_data)
-        print("Here!")
-
+        search_query = str(search_query).lower()
+        filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+        results = filtered_data.values.tolist()
 
     else:
-        data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+        # Check if search query exists in the cache
+        if search_query in cache:
 
-    search_query = str(search_query).lower()
-    filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
-    results = filtered_data.values.tolist()
-    # Cache the results
-    #cache[search_query] = results
+            print("Retrieving results from cache...")
+            results = cache[search_query]
+        else:
+            data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+            search_query = str(search_query).lower()
+            filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+            results = filtered_data.values.tolist()
 
-    # Check cache size and clear if necessary
-    #if len(cache) > 100:
-    #    print("Clearing cache...")
-    #    cache.clear()
+            # Cache the results
+            cache[search_query] = results
+            # Check cache size and clear if necessary
+            if len(cache) > 100:
+                print("Clearing cache...")
+                clear_cache()
 
     display_csv_data(results)
+
+def clear_cache():
+    cache.clear()
 
 def upload():
     global uploaded
@@ -770,6 +777,11 @@ return_frame.pack(side="bottom", fill="x")
     
 return_button = tk.Button(return_frame, text="Reset Filters", command=update_upload_status, **button_style)
 return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+
+return_button = tk.Button(return_frame, text="Clear Search Cache", command=clear_cache, **button_style)
+return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+
+
 
 
 # Set initial page
