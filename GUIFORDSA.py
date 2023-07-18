@@ -1,3 +1,9 @@
+#############################################################################################
+#######################                                            ##########################
+#######################                  IMPORTS                   ##########################
+#######################                                            ##########################
+#############################################################################################
+
 import tkinter as tk
 # import tkinter.ttk as ttk
 from tkinter import font, filedialog, messagebox, simpledialog, ttk, Scrollbar
@@ -38,17 +44,20 @@ from YearAnalysis import *
 from UpdateCVE import *
 from RetrieveCVE import *
 
+
+#############################################################################################
+#######################                                            ##########################
+#######################       Global Variables and Functions       ##########################
+#######################                                            ##########################
+#############################################################################################
+
 # Global flag variable (for update)
 is_program_running = True
 
-# # Clone the repository to a local folder
-# repo_url = "https://github.com/CVEProject/cvelistV5.git"
-# local_folder = "scrapedCVE"
-
 bar_chart_created = False
 bar_chart = None
-cache = {}
 uploaded=False
+cache = {}
 rows_to_display = []
 
 def update_upload_status():
@@ -63,24 +72,14 @@ def update_upload_status():
         uploaded = True
 
 # Call the function to update the global variable
-
 def get_rows_to_display():
     return rows_to_display
 
-def display_docx_content(file_path):
-    doc = docx.Document(file_path)
-    paragraphs = [paragraph.text for paragraph in doc.paragraphs]
-    file_content = "\n".join(paragraphs)
-
-    new_window = tk.Toplevel(root)
-    new_window.title("DOCX Content")
-
-    screen_width = new_window.winfo_screenwidth()
-    screen_height = new_window.winfo_screenheight()
-
-    content_text = tk.Text(new_window, bg="#f2f2f2", font=button_font, padx=10, pady=10)
-    content_text.insert(tk.END, file_content)
-    content_text.pack(fill="both", expand=True)
+#############################################################################################
+#######################                                            ##########################
+#######################      "UPDATE" BUTTON RELATED FUNCTION      ##########################
+#######################                                            ##########################
+#############################################################################################
 
 # Indefinitely check for updates
 def check_for_updates():
@@ -145,6 +144,12 @@ def update():
 
     # Testing updating csv file from .json updates file
     # update_csv_from_json()
+
+#############################################################################################
+#######################                                            ##########################
+#######################  "Retrieve Data" BUTTON RELATED FUNCTION   ##########################
+#######################                                            ##########################
+#############################################################################################
 
 # For retrieval
 def retrieve_data():
@@ -226,71 +231,74 @@ def open_loading_window():
 
     check_retrieval_status()
 
-def show_page(page):
-    page.tkraise()
-
-root = tk.Tk()
-root.title("CVE Aggregator")
-
-# Get the screen dimensions
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-
-# Calculate the window position to appear right above the taskbar
-taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
-taskbar_rect = win32gui.GetWindowRect(taskbar_hwnd)
-taskbar_height = taskbar_rect[1] - taskbar_rect[3]
-window_x = 0
-window_y = screen_height - (screen_height-taskbar_height)
-
-# Set the window size and position using geometry()
-root.geometry(f"{screen_width}x{screen_height-taskbar_height}+{window_x}+{window_y}")
-
-# Calculate the font size based on the screen height
-title_font_size = int(screen_height / 20)
-button_font_size = int(screen_height / 40)
-
-# Create custom fonts with the calculated sizes
-title_font = font.Font(size=title_font_size, weight="bold")
-button_font = font.Font(size=button_font_size)
-
-# Create a Frame to hold the pages
-page_frame = tk.Frame(root)
-page_frame.pack(fill="both", expand=True)
-
-# Create the Home page
-home_page = tk.Frame(page_frame, bg="#f2f2f2")
-home_page.pack(fill="both", expand=True)
-
-welcome_label = tk.Label(home_page, text="Welcome to CVE Aggregator", font=title_font, wraplength=screen_width - 100,  bg="#f2f2f2")
-welcome_label.pack(pady=20)
-
-# Configure button styles
-button_style = {
-    "bg": "#4CAF50",
-    "fg": "white",
-    "activebackground": "#45a049",
-    "activeforeground": "white",
-    "bd": 0,
-    "width": 20,
-    "font": button_font,
-    "pady": 10
-}
-
-update_button = tk.Button(home_page, text="Update", command=update, **button_style)
-update_button.pack(pady=10)
-
-retrieve_button = tk.Button(home_page, text="Retrieve Data", command=open_loading_window, **button_style)
-retrieve_button.pack(pady=10)
-
 #############################################################################################
 #######################                                            ##########################
-#######################                 Year Analysis              ##########################
+#######################             Vendor Analysis                ##########################
 #######################                                            ##########################
 #############################################################################################
 
+# Analysis Page
+def show_vendor_analysis_page():
+    
+    print("Analysis Page Clicked")
+    
+    # Hide label_analysis and analysis widgets
+    label_analysis.pack_forget()
+    analysis.pack_forget()
 
-def show_year_page():
+    # Ask for number of items
+    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display (Max 20):")
+
+    # Ensures num_items is between 1 to 20 inclusive. Prompts user to re-key the value again if too large
+    while num_items > 20 or num_items < 1:
+        num_items = simpledialog.askinteger("Number of vendors", "The value you have entered is not valid.\n\nEnter the number of vendors to display (Max 20):")
+    
+    if num_items is None:
+        return
+
+    for child in page_frame.winfo_children():
+        child.pack_forget()
+    home_page.pack_forget()
+    label_toolcheck.pack_forget()
+    label_analysis.pack(pady=20, side="top")
+    analysis.pack(fill="both", expand=True)
+
+    if not bar_chart_created:
+        create_bar_chart()
+    else:
+        # Clear bar chart data before replotting
+        plt.clf()
+        # Remove the bar chart from the frame
+        bar_chart.get_tk_widget().pack_forget()
+        
+    # Repack the bar chart and existing label
+    bar_chart.get_tk_widget().pack(fill='both', expand=True)
+    label_analysis.pack(pady=20, side="top")
+
+    print("Number items below:")
+    print(num_items)
+    vendor_frequency_analysis(num_items)
+
+def create_bar_chart():
+    global bar_chart_created, bar_chart
+
+    if not bar_chart_created:
+
+        # Display the bar chart
+        fig = plt.gcf()  # Get the current figure
+        bar_chart = FigureCanvasTkAgg(fig, master=analysis)
+        bar_chart.draw()
+        bar_chart.get_tk_widget().pack(fill='both', expand=True)
+        bar_chart_created = True
+
+#############################################################################################
+#######################                                            ##########################
+#######################               Year Analysis                ##########################
+#######################                                            ##########################
+#############################################################################################
+
+def show_year_analysis_page():
+
     label_year.pack_forget()
     year.pack_forget()
 
@@ -303,18 +311,20 @@ def show_year_page():
     year.pack(fill="both", expand=True)
 
     create_year_chart(year)
-
+    
 #############################################################################################
 #######################                                            ##########################
-#######################        Show Toolcheck Page                 ##########################
+#######################        System Security Checker Page        ##########################
 #######################                                            ##########################
 #############################################################################################
 
 def show_toolcheck_page():
+    
     print("Tool Page clicked")
 
     for child in page_frame.winfo_children():
         child.pack_forget()
+
     home_page.pack_forget()
     label_analysis.pack_forget()
     label_toolcheck.pack(pady=20, side="top")
@@ -325,13 +335,15 @@ def show_toolcheck_page():
     
     label_toolcheck.config(text=f"Windows Defender Status:\n{windows_defender_result}\n\n{firewall_result}", font=("Arial", 40))
 
+#############################################################################################
+#######################                                            ##########################
+#######################             CVE Search Page                ##########################
+#######################                                            ##########################
+#############################################################################################
 
-#############################################################################################
-#######################                                            ##########################
-#######################        Display CSV Data for App            ##########################
-#######################                                            ##########################
-#############################################################################################
+#This allows user to click a displayed CVE output and be brought to the actual CVE webpage
 def open_url(event):
+    
     selected_row = show_cvesearch_page.results_tree.focus()
     cve_id = show_cvesearch_page.results_tree.item(selected_row)["values"][0]
     url = "https://nvd.nist.gov/vuln/detail/" + cve_id
@@ -340,34 +352,9 @@ def open_url(event):
     if confirmed:
         webbrowser.open_new(url)
 
-def display_csv_data(data):
-    # Clear existing data in Treeview
-    show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
-
-    header = ['CveID', 'Vendor', 'Score', 'Description']
-    show_cvesearch_page.results_tree["columns"] = header
-
-    # Configure column names and properties
-    column_widths = [10, 10, 10, 400]  # Specify the width for each column
-    column_min_widths = [100, 100, 100, 20000]  # Specify the minimum width for each column
-
-    for i, col in enumerate(header):
-        show_cvesearch_page.results_tree.heading(col, text=col, anchor=tk.W)
-        show_cvesearch_page.results_tree.column(col, width=column_widths[i], minwidth=column_min_widths[i])
-
-    # Populate the Treeview with data rows
-    if uploaded == True:
-        for row in data[0:]:
-            show_cvesearch_page.results_tree.insert("", tk.END, values=row)
-    else:
-        for row in data[1:]:
-            show_cvesearch_page.results_tree.insert("", tk.END, values=row)
-    
     show_cvesearch_page.results_tree.bind("<Double-1>", open_url)
 
-
-cvesearch = tk.Frame(page_frame, bg="light blue")
-
+#Main function in the CVE Search Page to display all the buttons, search bar, etc.
 def show_cvesearch_page():
     # Clear previous contents of the page
     for child in page_frame.winfo_children():
@@ -459,9 +446,36 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
+#This function displays the csv data
+def display_csv_data(data):
+    # Clear existing data in Treeview
+    show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
+
+    header = ['CveID', 'Vendor', 'Score', 'Description']
+    show_cvesearch_page.results_tree["columns"] = header
+
+    # Configure column names and properties
+    column_widths = [10, 10, 10, 400]  # Specify the width for each column
+    column_min_widths = [100, 100, 100, 20000]  # Specify the minimum width for each column
+
+    for i, col in enumerate(header):
+        show_cvesearch_page.results_tree.heading(col, text=col, anchor=tk.W)
+        show_cvesearch_page.results_tree.column(col, width=column_widths[i], minwidth=column_min_widths[i])
+
+    # check if first row contains headers
+    if header == data[0]:
+        #if first row contains headers then display from second row onwards
+        for row in data[1:]:
+            show_cvesearch_page.results_tree.insert("", tk.END, values=row) 
+    else:    
+        for row in data:
+            show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+
+
 def search_cve_wrapper():
     search_text = show_cvesearch_page.search_entry.get()
     print(uploaded)
+
     if uploaded:
         all_search(search_text, get_rows_to_display())
 
@@ -469,16 +483,10 @@ def search_cve_wrapper():
         all_search(search_text, None)
 
 def all_search(search_query, uploaded_data):
-    # Check if search query exists in the cache
-    #if search_query in cache:
-    #    print("Retrieving results from cache...")
-    #   return cache[search_query]
-
-    # Read CSV file and perform search
+    
     if uploaded_data:
         data = pd.DataFrame(uploaded_data)
         print("Here!")
-
 
     else:
         data = pd.read_csv('CVECSV.csv', encoding='utf-8')
@@ -486,13 +494,6 @@ def all_search(search_query, uploaded_data):
     search_query = str(search_query).lower()
     filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
     results = filtered_data.values.tolist()
-    # Cache the results
-    #cache[search_query] = results
-
-    # Check cache size and clear if necessary
-    #if len(cache) > 100:
-    #    print("Clearing cache...")
-    #    cache.clear()
 
     display_csv_data(results)
 
@@ -508,6 +509,7 @@ def upload():
             rows_to_display += search_csv_by_id(file_path, 'CVECSV.csv')
 
             display_csv_data(rows_to_display)
+
             if not uploaded:
                 update_upload_status()
 
@@ -608,125 +610,79 @@ def export_to_csv(rows_to_display):
     
     print(f"Data has been successfully saved to {file_path}.")
 
-def show_full_text(event):
-    item = show_cvesearch_page.results_tree.selection()[0]
-    description = show_cvesearch_page.results_tree.item(item, "values")[3]
+#############################################################################################
+#######################                                            ##########################
+#######################                 Home Page                  ##########################
+#######################                                            ##########################
+#############################################################################################
 
-    # Create a new window to display the full text
-    full_text_window = tk.Toplevel()
-    full_text_window.title("Full Description")
-    full_text_label = tk.Label(full_text_window, text=description)
-    full_text_label.pack()
-
-def search_cve(search_text, sort_by=None, results_text=None):
-
-    # Read in the CVE data from a CSV file
-    cve_data = pd.read_csv("CVECSV.csv")
-
-    # Convert search_text to lowercase
-    search_text = search_text.lower()
-
-    # Filter the data based on the search text
-    filtered_data = cve_data[cve_data["CveID"].str.lower().str.contains(search_text)]
-
-    # Sort the filtered data by the specified column
-    if sort_by is not None:
-        filtered_data = filtered_data.sort_values(by=sort_by, ascending=True)
-
-    # Create a formatted string with the column headings and the data
-    columns = filtered_data.columns.tolist()
-    formatted_data = ""
-    formatted_data += "{:<15}{:<20}{:<10}{:<50}\n".format(columns[0], columns[1], columns[2], columns[3])
-    formatted_data += "=" * 95 + "\n"
-
-    for index, row in filtered_data.iterrows():
-        cve_id = row[columns[0]]
-        vendor = row[columns[1]]
-        score = row[columns[2]]
-        description = row[columns[3]]
-        formatted_data += "{:<15}{:<20}{:<10}{:<50}\n".format(cve_id, vendor, score, description)
-
-    # Clear the Text widget before displaying the new search results
-    results_text.delete(1.0, tk.END)
-
-    # Display the filtered results in the Text widget
-    results_text.insert(tk.END, filtered_data.to_string(index=False))
-
-# Analysis Page
-def show_analysis_page():
-    print("Analysis Page Clicked")
-    
-    # # Restore the visibility of home_page, label_toolcheck, and label_cvesearch
-    # home_page.pack()
-    # label_toolcheck.pack()
-    # label_cvesearch.pack()
-
-    # Hide label_analysis and analysis widgets
-    label_analysis.pack_forget()
-    analysis.pack_forget()
-
-    # Ask for number of items
-    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display (Max 20):")
-
-    # Ensures num_items is between 1 to 20 inclusive. Prompts user to re-key the value again if too large
-    while num_items > 20 or num_items < 1:
-        num_items = simpledialog.askinteger("Number of vendors", "The value you have entered is not valid.\n\nEnter the number of vendors to display (Max 20):")
-    
-    if num_items is None:
-        return
-
-    for child in page_frame.winfo_children():
-        child.pack_forget()
-    home_page.pack_forget()
-    label_toolcheck.pack_forget()
-    label_analysis.pack(pady=20, side="top")
-    analysis.pack(fill="both", expand=True)
-
-    if not bar_chart_created:
-        create_bar_chart()
-    else:
-        # Clear bar chart data before replotting
-        plt.clf()
-        # Remove the bar chart from the frame
-        bar_chart.get_tk_widget().pack_forget()
-        
-
-    # Repack the bar chart and existing label
-    bar_chart.get_tk_widget().pack(fill='both', expand=True)
-    label_analysis.pack(pady=20, side="top")
-
-    print("Number items below:")
-    print(num_items)
-    vendor_frequency_analysis(num_items)
-    
 def show_home_page():
+    
     toolcheck.pack_forget()
     cvesearch.pack_forget()
     analysis.pack_forget()
     year.pack_forget()
     home_page.pack(fill="both", expand=True)   
 
-def create_bar_chart():
-    global bar_chart_created, bar_chart
+#############################################################################################
+#######################                                            ##########################
+#######################     GUI Button/Label/Text Creation Codes   ##########################
+#######################                                            ##########################
+#############################################################################################
 
-    if not bar_chart_created:
-    # Data for the bar chart
-        # CVEs = ['CVE-2020-1234', 'CVE-2021-1234', 'CVE-2022-1234']
-        # values = [40, 20, 15]
+root = tk.Tk()
+root.title("CVE Aggregator")
 
-        # # Create a bar chart
-        # plt.bar(CVEs, values)
-        # plt.xlabel('CVEs')
-        # plt.ylabel('Values')
-        # plt.title('Bar Chart for CVEs')
+# Get the screen dimensions
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
 
-        # Display the bar chart
-        fig = plt.gcf()  # Get the current figure
-        bar_chart = FigureCanvasTkAgg(fig, master=analysis)
-        bar_chart.draw()
-        bar_chart.get_tk_widget().pack(fill='both', expand=True)
-        bar_chart_created = True
+# # Calculate the window position to appear right above the taskbar
+# taskbar_hwnd = win32gui.FindWindow("Shell_TrayWnd", None)
+# taskbar_rect = win32gui.GetWindowRect(taskbar_hwnd)
+# taskbar_height = taskbar_rect[1] - taskbar_rect[3]
+# window_x = 0
+# window_y = screen_height - (screen_height-taskbar_height)
 
+# Set the window size and position using geometry()
+# root.geometry(f"{screen_width}x{screen_height-taskbar_height}+{window_x}+{window_y}")
+
+# Calculate the font size based on the screen height
+title_font_size = int(screen_height / 20)
+button_font_size = int(screen_height / 40)
+
+# Create custom fonts with the calculated sizes
+title_font = font.Font(size=title_font_size, weight="bold")
+button_font = font.Font(size=button_font_size)
+
+# Create a Frame to hold the pages
+page_frame = tk.Frame(root)
+page_frame.pack(fill="both", expand=True)
+
+# Create the Home page
+home_page = tk.Frame(page_frame, bg="#f2f2f2")
+home_page.pack(fill="both", expand=True)
+
+welcome_label = tk.Label(home_page, text="Welcome to CVE Aggregator", font=title_font, wraplength=screen_width - 100,  bg="#f2f2f2")
+welcome_label.pack(pady=20)
+
+# Configure button styles
+button_style = {
+    "bg": "#4CAF50",
+    "fg": "white",
+    "activebackground": "#45a049",
+    "activeforeground": "white",
+    "bd": 0,
+    "width": 20,
+    "font": button_font,
+    "pady": 10
+}
+
+update_button = tk.Button(home_page, text="Update", command=update, **button_style)
+update_button.pack(pady=10)
+
+retrieve_button = tk.Button(home_page, text="Retrieve Data", command=open_loading_window, **button_style)
+retrieve_button.pack(pady=10)
 
 # Create the Page 1
 toolcheck = tk.Frame(page_frame, bg="light blue")
@@ -756,13 +712,15 @@ page1_button.pack(side="left", padx=10)
 page2_button = tk.Button(nav_frame, text="CVE Search", command=show_cvesearch_page, **button_style)
 page2_button.pack(side="left", padx=10)
 
-page3_button = tk.Button(nav_frame, text="Vendor Analysis", command=show_analysis_page, **button_style)
-page3_button.pack(side="left", padx=10)
+page3_button = tk.Button(home_page, text="Vendor Analysis", command=show_vendor_analysis_page, **button_style)
+page3_button.pack(pady=10)
 
-page4_button = tk.Button(home_page, text="Year Analysis", command=show_year_page, **button_style)
+page4_button = tk.Button(home_page, text="Year Analysis", command=show_year_analysis_page, **button_style)
 page4_button.pack(pady=10)
 
 root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full screen
+
+cvesearch = tk.Frame(page_frame, bg="light blue")
 
 # Create a Frame for the return button
 return_frame = tk.Frame(cvesearch, bg="light blue")
@@ -771,6 +729,14 @@ return_frame.pack(side="bottom", fill="x")
 return_button = tk.Button(return_frame, text="Reset Filters", command=update_upload_status, **button_style)
 return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
+#############################################################################################
+#######################                                            ##########################
+#######################           TKINTER MAIN FUNCTIONS           ##########################
+#######################                                            ##########################
+#############################################################################################
+
+def show_page(page):
+    page.tkraise()
 
 # Set initial page
 show_page(home_page)
