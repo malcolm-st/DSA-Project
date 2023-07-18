@@ -471,7 +471,6 @@ def display_csv_data(data):
         for row in data:
             show_cvesearch_page.results_tree.insert("", tk.END, values=row)
 
-
 def search_cve_wrapper():
     search_text = show_cvesearch_page.search_entry.get()
     print(uploaded)
@@ -483,23 +482,44 @@ def search_cve_wrapper():
         all_search(search_text, None)
 
 def all_search(search_query, uploaded_data):
-    
+
+    # Read CSV file and perform search
     if uploaded_data:
         data = pd.DataFrame(uploaded_data)
-        print("Here!")
+        search_query = str(search_query).lower()
+        filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+        results = filtered_data.values.tolist()
 
     else:
-        data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+        # Check if search query exists in the cache
+        if search_query in cache:
 
-    search_query = str(search_query).lower()
-    filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
-    results = filtered_data.values.tolist()
+            print("Retrieving results from cache...")
+            results = cache[search_query]
+        else:
+            data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+            search_query = str(search_query).lower()
+            filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+            results = filtered_data.values.tolist()
+
+            # Cache the results
+            cache[search_query] = results
+            # Check cache size and clear if necessary
+            if len(cache) > 100:
+                print("Clearing cache...")
+                clear_cache()
 
     display_csv_data(results)
 
+def clear_cache():
+    cache.clear()
+
 def upload():
+
+    # use the global keyword to access the global rows_to_display variable
     global uploaded
-    global rows_to_display  # use the global keyword to access the global rows_to_display variable
+    global rows_to_display  
+
     file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", ".docx"), ("Text Files", ".txt")])
     rows_to_display = []  # reset the rows_to_display list
 
@@ -727,6 +747,9 @@ return_frame = tk.Frame(cvesearch, bg="light blue")
 return_frame.pack(side="bottom", fill="x")
     
 return_button = tk.Button(return_frame, text="Reset Filters", command=update_upload_status, **button_style)
+return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+
+return_button = tk.Button(return_frame, text="Clear Search Cache", command=clear_cache, **button_style)
 return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
 #############################################################################################
