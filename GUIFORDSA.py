@@ -356,6 +356,8 @@ def open_url(event):
 
 #Main function in the CVE Search Page to display all the buttons, search bar, etc.
 def show_cvesearch_page():
+
+
     # Clear previous contents of the page
     for child in page_frame.winfo_children():
         child.pack_forget()
@@ -420,6 +422,15 @@ def show_cvesearch_page():
         show_cvesearch_page.results_tree.pack(fill="both", expand=True)
         show_cvesearch_page.tree_x_scrollbar.pack(side="bottom", fill="x")
 
+    # File Path
+    csv_filename = 'CVECSV.csv'
+
+    # Read the CSV file and update the data
+    with open(csv_filename, "r", encoding="utf-8") as file:
+        reader = csv.reader(file)
+        data = list(reader)
+        
+    display_csv_data(data)
 
     # # Create search button if it doesn't exist
     if not hasattr(show_cvesearch_page, 'search_button'):
@@ -435,17 +446,9 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
-    display_csv_data([])
-
+    
 #This function displays the csv data
 def display_csv_data(data):
-    # File Path
-    csv_filename = 'CVECSV.csv'
-
-    # Read the CSV file and update the data
-    with open(csv_filename, "r", encoding="utf-8") as file:
-        reader = csv.reader(file)
-        data = list(reader)
 
     # Clear existing data in Treeview
     show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
@@ -464,17 +467,17 @@ def display_csv_data(data):
     # check if first row contains headers
     if header == data[0]:
         #if first row contains headers then display from second row onwards
-        for row in data[1:]:
+        for row in data:
             show_cvesearch_page.results_tree.insert("", tk.END, values=row)
     else:
         if len(data) == 1:
             for row in data:
                 show_cvesearch_page.results_tree.insert("", tk.END, values=row)
         else:
-            for row in data:
+            for row in data[1:]:
                 show_cvesearch_page.results_tree.insert("", tk.END, values=row)
     
-    # This to bind the action of double clicking to the function open_url
+    # This to bind the action of double clicking to the function open_url     
     show_cvesearch_page.results_tree.bind("<Double-1>", open_url)
 
 def search_cve_wrapper():
