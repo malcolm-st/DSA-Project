@@ -388,7 +388,7 @@ def show_cvesearch_page():
         sort_label.pack(side="left", padx=10)
 
         show_cvesearch_page.sort_var = tk.StringVar()
-        sort_options = ["CveID", "Vendor", "Score", "Description"]
+        sort_options = ["CveID Asc", "CveID Desc", "Score Asc", "Score Desc"]
         sort_dropdown = tk.OptionMenu(show_cvesearch_page.search_frame, show_cvesearch_page.sort_var, *sort_options)
         sort_dropdown.pack(side="left", padx=10)
 
@@ -465,54 +465,94 @@ def display_csv_data(data):
     # check if first row contains headers
     if header == data[0]:
         #if first row contains headers then display from second row onwards
-        for row in data[1:]:
-            show_cvesearch_page.results_tree.insert("", tk.END, values=row) 
-    else:    
         for row in data:
             show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+    else:
+        if len(data) == 1:
+            for row in data:
+                show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+        else:
+            for row in data[1:]:
+                show_cvesearch_page.results_tree.insert("", tk.END, values=row)
 
 def search_cve_wrapper():
     search_text = show_cvesearch_page.search_entry.get()
-    print(uploaded)
-
     if uploaded:
         all_search(search_text, get_rows_to_display())
-
     else:
         all_search(search_text, None)
 
 def all_search(search_query, uploaded_data):
+    # Create a cache key using the search query and sort option
+    sort_option = show_cvesearch_page.sort_var.get()
+    cache_key = (search_query, sort_option)
+    global uploaded
+    print(uploaded)
 
-    # Read CSV file and perform search
-    if uploaded_data:
-        data = pd.DataFrame(uploaded_data)
+    # Check if search query and sort option exist in the cache
+    if cache_key in cache and not uploaded:
+        print("Retrieving results from cache...")
+        results = cache[cache_key]
+
+    else:
+        if uploaded_data:
+            data = pd.DataFrame(uploaded_data)
+        else:
+            data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+
         search_query = str(search_query).lower()
         filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
         results = filtered_data.values.tolist()
 
-    else:
-        # Check if search query exists in the cache
-        if search_query in cache:
 
-            print("Retrieving results from cache...")
-            results = cache[search_query]
-        else:
-            data = pd.read_csv('CVECSV.csv', encoding='utf-8')
-            search_query = str(search_query).lower()
-            filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
-            results = filtered_data.values.tolist()
+        vendor_column_index = 1
+        for row in results:
+            if pd.isna(row[vendor_column_index]):
+                row[vendor_column_index] = "n/a"
+            elif row[vendor_column_index] == "":
+                row[vendor_column_index] = "n/a"
 
-            # Cache the results
-            cache[search_query] = results
-            # Check cache size and clear if necessary
-            if len(cache) > 100:
-                print("Clearing cache...")
-                clear_cache()
+        score_column_index = 2
+        for row in results:
+            if pd.isna(row[score_column_index]):
+                row[score_column_index] = ""
+            elif row[score_column_index] == "":
+                row[score_column_index] = ""
+
+        # Sort the results based on the selected option
+        if sort_option == "CveID Asc":
+            results.sort(key=lambda x: x[0], reverse=False)
+        elif sort_option == "CveID Desc":
+            results.sort(key=lambda x: x[0], reverse=True)
+        elif sort_option == "Score Asc":
+            results.sort(
+                key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
+                    'inf') if isinstance(x[2], str) else x[2], reverse=False)
+        elif sort_option == "Score Desc":
+            results.sort(
+                key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
+                    '-inf') if isinstance(x[2], str) else x[2], reverse=True)
+
+
+
+        # Cache the results
+        if not uploaded:
+            cache[cache_key] = results
+            # Update the cache counter
+            show_cvesearch_page.cache_counter.config(text="Cache Size: " + str(len(cache)))
+
+
+        # Check cache size and clear if necessary
+        if len(cache) > 100:
+            print("Clearing cache...")
+            clear_cache()
+
 
     display_csv_data(results)
 
 def clear_cache():
     cache.clear()
+    show_cvesearch_page.cache_counter.config(text="Cache Size: 0")
 
 def upload():
 
@@ -751,6 +791,10 @@ return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
 
 return_button = tk.Button(return_frame, text="Clear Search Cache", command=clear_cache, **button_style)
 return_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
+
+# Create a label widget for the cache counter
+show_cvesearch_page.cache_counter = tk.Label(return_frame, text="Cache Size: 0", font=button_font, bg="#f2f2f2")
+show_cvesearch_page.cache_counter.pack(side="right", padx=15, pady=10)
 
 #############################################################################################
 #######################                                            ##########################
