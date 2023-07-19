@@ -352,7 +352,7 @@ def open_url(event):
     if confirmed:
         webbrowser.open_new(url)
 
-    show_cvesearch_page.results_tree.bind("<Double-1>", open_url)
+    
 
 #Main function in the CVE Search Page to display all the buttons, search bar, etc.
 def show_cvesearch_page():
@@ -420,17 +420,6 @@ def show_cvesearch_page():
         show_cvesearch_page.results_tree.pack(fill="both", expand=True)
         show_cvesearch_page.tree_x_scrollbar.pack(side="bottom", fill="x")
 
-    # File Path
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    csv_filename = 'CVECSV.csv'
-    csv_file = os.path.join(dir_path, csv_filename)
-
-    # Read the CSV file and update the data
-    with open(csv_file, "r", encoding="utf-8") as file:
-        reader = csv.reader(file)
-        data = list(reader)
-
-    display_csv_data(data)
 
     # # Create search button if it doesn't exist
     if not hasattr(show_cvesearch_page, 'search_button'):
@@ -446,8 +435,18 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
+    display_csv_data([])
+
 #This function displays the csv data
 def display_csv_data(data):
+    # File Path
+    csv_filename = 'CVECSV.csv'
+
+    # Read the CSV file and update the data
+    with open(csv_filename, "r", encoding="utf-8") as file:
+        reader = csv.reader(file)
+        data = list(reader)
+
     # Clear existing data in Treeview
     show_cvesearch_page.results_tree.delete(*show_cvesearch_page.results_tree.get_children())
 
@@ -456,7 +455,7 @@ def display_csv_data(data):
 
     # Configure column names and properties
     column_widths = [10, 10, 10, 400]  # Specify the width for each column
-    column_min_widths = [100, 100, 100, 20000]  # Specify the minimum width for each column
+    column_min_widths = [100, 200, 100, 20000]  # Specify the minimum width for each column
 
     for i, col in enumerate(header):
         show_cvesearch_page.results_tree.heading(col, text=col, anchor=tk.W)
@@ -474,6 +473,9 @@ def display_csv_data(data):
         else:
             for row in data[1:]:
                 show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+    
+    # This to bind the action of double clicking to the function open_url
+    show_cvesearch_page.results_tree.bind("<Double-1>", open_url)
 
 def search_cve_wrapper():
     search_text = show_cvesearch_page.search_entry.get()
