@@ -559,49 +559,73 @@ def clear_cache():
     cache.clear()
     show_cvesearch_page.cache_counter.config(text="Cache Size: 0")
 
+
+# Upload button
 def upload():
 
-    # use the global keyword to access the global rows_to_display variable
+    # Use the global keyword to access the global rows_to_display variable
     global uploaded
     global rows_to_display  
 
     file_paths = filedialog.askopenfilenames(filetypes=[("Word Documents", ".docx"), ("Text Files", ".txt")])
-    rows_to_display = []  # reset the rows_to_display list
+
+    # Reset the rows_to_display list
+    rows_to_display = []  
 
     for file_path in file_paths:
+
+        # Check if the file path ends with .docx or .txt
         if file_path.endswith(".docx") or file_path.endswith(".txt"):
-            # call the search_csv_by_id function and append the results to the list
+            # Call the search_csv_by_id function and append the results to the list
             rows_to_display += search_csv_by_id(file_path, 'CVECSV.csv')
 
+            # Ran the display_csv_data(rows_to_display) to display all the relevant info related to uploaded data
             display_csv_data(rows_to_display)
 
             if not uploaded:
                 update_upload_status()
 
+            # Create export button if it doesnt exist
             if not hasattr(return_frame, 'export_button'): 
                 export_button = tk.Button(return_frame, text="Export", command=lambda: export_to_csv(rows_to_display), **button_style)
                 export_button.pack(side=tk.LEFT, padx=10, pady=10, anchor='center')
-                return_frame.export_button = export_button  # set the export_button attribute on the return_frame object
+
+                # Set the export_button attribute on the return_frame object
+                return_frame.export_button = export_button 
+    
             else:
                 return_frame.export_button.pack()
 
+        # error handling statement
         else:
             print("Invalid file format. Please upload a DOCX or TXT file.")
 
+#############################################################################################
+#######################                                            ##########################
+#######################       USING DICTIONARY BASED TO SEARCH     ##########################
+#######################                                            ##########################
+#############################################################################################
+
 def search_csv_by_id(file_path, csv_file):
+
     # Initialize an empty list to store the IDs
     ids = []
     
     # Check if the file path ends with .txt
     if file_path.endswith(".txt"):
+
         # Open the file in read mode
         with open(file_path) as f:
+
             # Read each line, strip it of leading/trailing whitespace, and add it to the list of IDs if it's not empty
             ids = [line.strip() for line in f if line.strip()]
+
     # Check if the file path ends with .docx
     elif file_path.endswith(".docx"):
+
         # Open the DOCX file using the docx library
         doc = docx.Document(file_path)
+
         # Iterate over each paragraph in the document
         for paragraph in doc.paragraphs:
             # Get the text of the paragraph, strip it of leading/trailing whitespace
@@ -621,6 +645,7 @@ def search_csv_by_id(file_path, csv_file):
         
         header = next(reader)
         
+        # Identify header with the label 'CveID'
         cve_id_index = header.index('CveID')
         
         data = {row[cve_id_index]: row for row in reader}
@@ -628,26 +653,135 @@ def search_csv_by_id(file_path, csv_file):
     # Initialize an empty list to store the rows to display
     rows_to_display = []
     
-    # Initialize an empty set to store unique CVE IDs (to avoid displaying duplicate rows)
+    # Initialize an empty set to store unique CVE IDs which will be used to avoid displaying duplicate rows
     unique_cve_ids = set()
     
     # Iterate over each ID in the list of IDs
     for cve_id in ids:
+
         # Check if the ID is in the data dictionary and has not already been added to the unique_cve_ids set
         if cve_id in data and cve_id not in unique_cve_ids:
+
             # Add the row corresponding to that ID to the rows_to_display list
             rows_to_display.append(data[cve_id])
+
             # Add the ID to the unique_cve_ids set
             unique_cve_ids.add(cve_id)
 
     # Check if no rows were found or if the last row added does not match the last ID searched for
     if not rows_to_display or rows_to_display[-1][cve_id_index] != cve_id:
+        
         # Print a message indicating that no results were found for that ID
         print(f"No results found for {cve_id}")
 
     # Return the list of rows to display
     return rows_to_display
 
+#############################################################################################
+#######################                                            ##########################
+#######################         USING BINARY SEARCH TO SEARCH      ##########################
+#######################                                            ##########################
+#############################################################################################
+#To use the binary search function instead just highlight the whole thing and uncomment. However, remember to comment the dictionary key search function above.
+#This is solely for project assessment purpose, it is not used but is left for grading purposes to show the difference in both codes.
+#Look at report for more details
+
+# def search_csv_by_id(file_path, csv_file):
+    
+#     global rows_to_display
+    
+#     # reset the rows_to_display list    
+#     rows_to_display = []  
+
+#     # Initialize an empty list to store the IDs
+#     ids = []
+    
+#     # Check if the file path ends with .txt
+#     if file_path.endswith(".txt"):
+
+#         # Open the file in read mode
+#         with open(file_path) as f:
+
+#             # Read each line, strip it of leading/trailing whitespace, and add it to the list of IDs if it's not empty
+#             ids = [line.strip() for line in f if line.strip()]
+
+#     # Check if the file path ends with .docx
+#     elif file_path.endswith(".docx"):
+
+#         # Open the DOCX file using the docx library
+#         doc = docx.Document(file_path)
+
+#         # Iterate over each paragraph in the document
+#         for paragraph in doc.paragraphs:
+
+#             # Get the text of the paragraph, strip it of leading/trailing whitespace
+#             line = paragraph.text.strip()
+
+#             # If the line is not empty, add it to the list of IDs
+#             if line:
+#                 ids.append(line)
+#     else:
+#         # If the file is not a TXT or DOCX file, print an error message and return an empty list
+#         print("Invalid file format. Please upload a DOCX or TXT file.")
+#         return []
+    
+#     # Open the CSV file in read mode with utf-8 encoding
+#     with open(csv_file, "r", encoding="utf-8") as file:
+        
+#         # Create a CSV reader object to read the contents of the file
+#         reader = csv.reader(file)
+        
+#         header = next(reader)
+        
+#         # Identify header with the label 'CveID'
+#         cve_id_index = header.index('CveID')
+        
+#         data = sorted([row for row in reader], key=lambda x: x[cve_id_index])
+    
+#     #Binary search function
+#     def binary_search(data, target):
+#         # Set the initial values for the low and high indices
+#         low = 0
+#         high = len(data) - 1
+        
+#         # Continue searching while the low index is less than or equal to the high index
+#         while low <= high:
+#             # Calculate the middle index
+#             mid = (low + high) // 2
+#             # Check if the value at the middle index is equal to the target value
+#             if data[mid][cve_id_index] == target:
+#                 # If it is, return the row at the middle index
+#                 return data[mid]
+#             # If the value at the middle index is less than the target value
+#             elif data[mid][cve_id_index] < target:
+#                 # Set the new low index to be one more than the middle index
+#                 low = mid + 1
+#             # If the value at the middle index is greater than the target value
+#             else:
+#                 # Set the new high index to be one less than the middle index
+#                 high = mid - 1
+        
+#         # If the target value is not found, return None
+#         return None
+    
+#     # Initialize an empty set to store unique CVE IDs (to avoid displaying duplicate rows)
+#     unique_cve_ids = set()
+    
+#     # Iterate over each ID in the list of IDs
+#     for cve_id in ids:
+#         row = binary_search(data, cve_id)
+        
+#         if row and cve_id not in unique_cve_ids:
+#             rows_to_display.append(row)
+#             unique_cve_ids.add(cve_id)
+
+#     # Remove any duplicated output
+#     rows_to_display = list(set(map(tuple, rows_to_display)))  
+
+#     # Return the list of rows to display
+#     return rows_to_display
+
+#function used for exporting the displayed rows
 def export_to_csv(rows_to_display):
 
     if not rows_to_display:
