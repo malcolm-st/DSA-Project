@@ -467,7 +467,7 @@ def display_csv_data(data):
     # check if first row contains headers
     if header == data[0]:
         #if first row contains headers then display from second row onwards
-        for row in data[1:]
+        for row in data[1:]:
             show_cvesearch_page.results_tree.insert("", tk.END, values=row)
     else:
         if len(data) == 1:
