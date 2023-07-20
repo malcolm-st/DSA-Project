@@ -66,9 +66,11 @@ def update_upload_status():
     # Access the global variable
     global uploaded
 
+    # Modify the global variable and show the CVE Search Page
     if uploaded:
         uploaded = False
         show_cvesearch_page()
+
     # Modify the global variable
     else:
         uploaded = True
@@ -518,28 +520,38 @@ def search_cve_wrapper():
         all_search(search_text, None)
 
 def all_search(search_query, uploaded_data):
-    # Create a cache key using the search query and sort option
+    # Get the current sort option from the GUI
     sort_option = show_cvesearch_page.sort_var.get()
+
+    # Create a cache key using the search query and sort option
     cache_key = (search_query, sort_option)
+
+    # Access the global 'uploaded' variable
     global uploaded
     print(uploaded)
 
-    # Check if search query and sort option exist in the cache
+    # Check if search query and sort option exist in the cache and the data is not uploaded
     if cache_key in cache and not uploaded:
         print("Retrieving results from cache...")
+        # Retrieve the results from the cache
         results = cache[cache_key]
 
     else:
+        # If uploaded_data is provided, use it as the data source, else read from the CSV file
         if uploaded_data:
             data = pd.DataFrame(uploaded_data)
         else:
             data = pd.read_csv('CVECSV.csv', encoding='utf-8')
 
+        # Convert the search query to lowercase for case-insensitive search
         search_query = str(search_query).lower()
+
+        # Filter the data based on the search query
         filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+        # Convert the filtered data to a list of lists (rows)
         results = filtered_data.values.tolist()
 
-
+        # Fill any NaN or empty cells in the 'Vendor' column with "n/a"
         vendor_column_index = 1
         for row in results:
             if pd.isna(row[vendor_column_index]):
@@ -547,6 +559,7 @@ def all_search(search_query, uploaded_data):
             elif row[vendor_column_index] == "":
                 row[vendor_column_index] = "n/a"
 
+        # Fill any NaN or empty cells in the 'Score' column with an empty string
         score_column_index = 2
         for row in results:
             if pd.isna(row[score_column_index]):
@@ -568,25 +581,24 @@ def all_search(search_query, uploaded_data):
                 key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
                     '-inf') if isinstance(x[2], str) else x[2], reverse=True)
 
-        # Cache the results
+        # Cache the results if the data is not uploaded
         if not uploaded:
             cache[cache_key] = results
-            # Update the cache counter
+            # Update the cache counter in the GUI
             show_cvesearch_page.cache_counter.config(text="Cache Size: " + str(len(cache)))
-
 
         # Check cache size and clear if necessary
         if len(cache) > 100:
             print("Clearing cache...")
             clear_cache()
 
-
+    # Display the results in the GUI
     display_csv_data(results)
 
 def clear_cache():
+    # Clears the cache
     cache.clear()
     show_cvesearch_page.cache_counter.config(text="Cache Size: 0")
-
 
 # Upload button
 def upload():
