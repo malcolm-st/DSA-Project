@@ -1,6 +1,6 @@
-import pandas as pd
+import csv
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import re
 
 
 #############################################################################################
@@ -39,44 +39,43 @@ def merge(left, right):
 
     return merged
 
-# The function will create the chart
-def create_year_chart(year):
-    # Check if the chart attribute exists in the year frame
-    chart_attribute_exists = hasattr(year, "chart")
-
-    if chart_attribute_exists:
-        # If the attribute exists, remove the previous chart
-        year.chart.get_tk_widget().pack_forget()
+def sanitize_cve_id(cve_id):
+    # Use regular expression to extract the year from the CVE ID
+    year_match = re.search(r'CVE-(\d{4})-\d+', cve_id)
+    if year_match:
+        return year_match.group(1)
     else:
-        # If the attribute doesn't exist, create it
-        year.chart = None
+        return 'n/a' 
+    
+def year_frequency_analysis(num_year):
+    years = {}  # Clear the years dictionary
 
-    # Load the CSV file into a pandas DataFrame
-    df = pd.read_csv('CVECSV.csv')
+    # Opens CSV file to carry out frequency analysis on CVEs by year
+    with open('CVECSV.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            cve_id = row['CveID']
+            year = sanitize_cve_id(cve_id)
+            # Do not consider years with 'n/a' or empty fields
+            if year != 'n/a' and year != '':
+                if year in years:
+                    years[year] += 1
+                else:
+                    years[year] = 1
 
-    # Extract the year from the CVE ID
-    df['Year'] = df['CveID'].str.extract(r'CVE-(\d{4})-\d+')
+    sorted_years = sorted(years.items(), key=lambda x: x[1], reverse=True)
+    top_years = sorted_years[:num_year]  # Select number of years defined by user to display
 
-    # Count the number of CVEs for each year
-    year_counts = df['Year'].value_counts()
+    years_labels = [year for year, count in top_years]
+    cve_counts = [count for year, count in top_years]
 
-    # Sort the years in ascending order based on the number of CVEs
-    sorted_years = dict(sorted(year_counts.items(), key=lambda x: x[1]))
+    plt.barh(years_labels, cve_counts)  # Create a bar chart
 
-    # Extract the top five years with the most CVEs
-    top_five_years = dict(list(sorted_years.items())[-5:])
+    # Display the frequency value above each bar
+    for i, freq in enumerate(cve_counts):
+        plt.text(freq, i, str(freq), va='center')
 
-    # Create a bar chart of the top five years with the most CVEs
-    fig, ax = plt.subplots()
-    ax.bar(top_five_years.keys(), top_five_years.values())
-    ax.set_xlabel('Year')
-    ax.set_ylabel('Number of CVEs')
-    ax.set_title('Top Five Years with the Most CVEs')
-
-    # Embed the Matplotlib graph in the Year Page
-    canvas = FigureCanvasTkAgg(fig, master=year)
-    canvas.draw()
-    canvas.get_tk_widget().pack()
-
-    # Assign the chart attribute in the year frame
-    year.chart = canvas
+    plt.xlabel('Number of CVEs')  # Label for the x-axis
+    plt.ylabel('Year')  # Label for the y-axis
+    plt.title("Top " + str(num_year) + " Years with the Most CVEs")  # Title of the plot
+    plt.tight_layout()  # Ensure labels fit within the plot

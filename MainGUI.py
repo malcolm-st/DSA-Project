@@ -56,6 +56,8 @@ is_program_running = True
 
 bar_chart_created = False
 bar_chart = None
+year_chart_created = False
+year_chart = None
 uploaded=False
 cache = {}
 rows_to_display = []
@@ -298,20 +300,51 @@ def create_bar_chart():
 #############################################################################################
 
 def show_year_analysis_page():
-
     label_year.pack_forget()
     year.pack_forget()
+
+    # Ask for number of years
+    num_year = simpledialog.askinteger("Number of years", "Enter the number of years to display:")
+
+    # Ensures num_years is between 1 to 10 inclusive. Prompts user to re-key the value again if too large
+    while num_year > 20 or num_year < 1:
+        num_year = simpledialog.askinteger("Number of years", "The value you have entered is not valid.\n\nEnter the number of years to display (Max 10):")
+   
+    if num_year is None:
+        return
 
     for child in page_frame.winfo_children():
         child.pack_forget()
     home_page.pack_forget()
     label_toolcheck.pack_forget()
-    #label_cvesearch.pack_forget()
     label_year.pack(pady=20, side="top")
     year.pack(fill="both", expand=True)
 
-    create_year_chart(year)
-    
+    if not year_chart_created:
+        create_year_chart()
+    else:
+        # Clear bar chart data before replotting
+        plt.clf()
+        # Remove the bar chart from the frame
+        year_chart.get_tk_widget().pack_forget()
+
+    # Repack the bar chart and existing label
+    year_chart.get_tk_widget().pack(fill='both', expand=True)
+    label_year.pack(pady=20, side="top")
+
+    print("Number years below:")
+    print(num_year)
+    year_frequency_analysis(num_year)
+
+def create_year_chart():
+    global year_chart_created, year_chart
+
+    # Display the initial empty bar chart
+    fig = plt.gcf()  # Get the current figure
+    year_chart = FigureCanvasTkAgg(fig, master=year)
+    year_chart.draw()
+    year_chart.get_tk_widget().pack(fill='both', expand=True)
+    year_chart_created = True
 #############################################################################################
 #######################                                            ##########################
 #######################        System Security Checker Page        ##########################
@@ -816,6 +849,7 @@ def show_home_page():
     cvesearch.pack_forget()
     analysis.pack_forget()
     year.pack_forget()
+    plt.clf()
     home_page.pack(fill="both", expand=True)   
 
 #############################################################################################
