@@ -533,6 +533,66 @@ def search_cve_wrapper():
     else:
         all_search(search_text, None)
 
+def filter_data(data, search_query):
+    # Convert the search query to lowercase for case-insensitive search
+    search_query = str(search_query).lower()
+
+    # Filter the data based on the search query
+    filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
+    return filtered_data.values.tolist()
+
+def fill_empty_cells_with_default(results):
+    # Fill any NaN or empty cells in the 'Vendor' column with "n/a"
+    vendor_column_index = 1
+    for row in results:
+        if pd.isna(row[vendor_column_index]) or row[vendor_column_index] == "":
+            row[vendor_column_index] = "n/a"
+
+    # Fill any NaN or empty cells in the 'Score' column with an empty string
+    score_column_index = 2
+    for row in results:
+        if pd.isna(row[score_column_index]) or row[score_column_index] == "":
+            row[score_column_index] = ""
+    return results
+
+def sort_results(results, sort_option):
+    # Sort the results based on the selected option
+    if sort_option == "CveID Asc":
+        results.sort(key=lambda x: x[0], reverse=False)
+    elif sort_option == "CveID Desc":
+        results.sort(key=lambda x: x[0], reverse=True)
+    elif sort_option == "Score Asc":
+        results.sort(
+            key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
+                'inf') if isinstance(x[2], str) else x[2], reverse=False)
+    elif sort_option == "Score Desc":
+        results.sort(
+            key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
+                '-inf') if isinstance(x[2], str) else x[2], reverse=True)
+    return results
+
+def cache_results(cache_key, results):
+    # Cache the results if the data is not uploaded
+    if not uploaded:
+        cache[cache_key] = results
+        # Update the cache counter in the GUI
+        show_cvesearch_page.cache_counter.config(text="Cache Size: " + str(len(cache)))
+
+def search_data(search_query, uploaded_data):
+    # If uploaded_data is provided, use it as the data source, else read from the CSV file
+    if uploaded_data:
+        data = pd.DataFrame(uploaded_data)
+    else:
+        data = pd.read_csv('CVECSV.csv', encoding='utf-8')
+
+    # Filter the data based on the search query
+    results = filter_data(data, search_query)
+
+    # Fill any empty cells with default values
+    results = fill_empty_cells_with_default(results)
+
+    return results
+
 def all_search(search_query, uploaded_data):
     # Get the current sort option from the GUI
     sort_option = show_cvesearch_page.sort_var.get()
@@ -551,55 +611,14 @@ def all_search(search_query, uploaded_data):
         results = cache[cache_key]
 
     else:
-        # If uploaded_data is provided, use it as the data source, else read from the CSV file
-        if uploaded_data:
-            data = pd.DataFrame(uploaded_data)
-        else:
-            data = pd.read_csv('CVECSV.csv', encoding='utf-8')
-
-        # Convert the search query to lowercase for case-insensitive search
-        search_query = str(search_query).lower()
-
-        # Filter the data based on the search query
-        filtered_data = data[data.apply(lambda row: any(search_query in str(cell).lower() for cell in row), axis=1)]
-        # Convert the filtered data to a list of lists (rows)
-        results = filtered_data.values.tolist()
-
-        # Fill any NaN or empty cells in the 'Vendor' column with "n/a"
-        vendor_column_index = 1
-        for row in results:
-            if pd.isna(row[vendor_column_index]):
-                row[vendor_column_index] = "n/a"
-            elif row[vendor_column_index] == "":
-                row[vendor_column_index] = "n/a"
-
-        # Fill any NaN or empty cells in the 'Score' column with an empty string
-        score_column_index = 2
-        for row in results:
-            if pd.isna(row[score_column_index]):
-                row[score_column_index] = ""
-            elif row[score_column_index] == "":
-                row[score_column_index] = ""
+        # Perform a new search
+        results = search_data(search_query, uploaded_data)
 
         # Sort the results based on the selected option
-        if sort_option == "CveID Asc":
-            results.sort(key=lambda x: x[0], reverse=False)
-        elif sort_option == "CveID Desc":
-            results.sort(key=lambda x: x[0], reverse=True)
-        elif sort_option == "Score Asc":
-            results.sort(
-                key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
-                    'inf') if isinstance(x[2], str) else x[2], reverse=False)
-        elif sort_option == "Score Desc":
-            results.sort(
-                key=lambda x: float(x[2]) if isinstance(x[2], str) and x[2].replace('.', '', 1).isdigit() else float(
-                    '-inf') if isinstance(x[2], str) else x[2], reverse=True)
+        results = sort_results(results, sort_option)
 
         # Cache the results if the data is not uploaded
-        if not uploaded:
-            cache[cache_key] = results
-            # Update the cache counter in the GUI
-            show_cvesearch_page.cache_counter.config(text="Cache Size: " + str(len(cache)))
+        cache_results(cache_key, results)
 
         # Check cache size and clear if necessary
         if len(cache) > 100:
