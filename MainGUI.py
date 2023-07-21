@@ -511,11 +511,23 @@ def display_csv_data(data):
         show_cvesearch_page.results_tree.column(col, width=column_widths[i], minwidth=column_min_widths[i])
 
     # check if first row contains headers
-    if header == data[0]:
-        #if first row contains headers then display from second row onwards
-        for row in data[1:]:
-            show_cvesearch_page.results_tree.insert("", tk.END, values=row)
-    else:
+    try:
+        if header == data[0]:
+            # If the first row contains headers, display from the second row onwards
+            for row in data[1:]:
+                show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+        else:
+            # If the first row doesn't contain headers or the data list is empty
+            if len(data) == 1:
+                for row in data:
+                    show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+            else:
+                for row in data:
+                    show_cvesearch_page.results_tree.insert("", tk.END, values=row)
+
+    except IndexError as e:
+        # Handle the IndexError here
+        print("error")
         if len(data) == 1:
             for row in data:
                 show_cvesearch_page.results_tree.insert("", tk.END, values=row)
@@ -533,6 +545,40 @@ def search_cve_wrapper():
     else:
         all_search(search_text, None)
 
+def all_search(search_query, uploaded_data):
+    # Get the current sort option from the GUI
+    sort_option = show_cvesearch_page.sort_var.get()
+
+    # Create a cache key using the search query and sort option
+    cache_key = (search_query, sort_option)
+
+    # Access the global 'uploaded' variable
+    global uploaded
+    print(uploaded)
+
+    # Check if search query and sort option exist in the cache and the data is not uploaded
+    if cache_key in cache and not uploaded:
+        print("Retrieving results from cache...")
+        # Retrieve the results from the cache
+        results = cache[cache_key]
+
+    else:
+        # Perform a new search
+        results = search_data(search_query, uploaded_data)
+
+        # Sort the results based on the selected option
+        results = sort_results(results, sort_option)
+
+        # Cache the results if the data is not uploaded
+        cache_results(cache_key, results)
+
+        # Check cache size and clear if necessary
+        if len(cache) > 100:
+            print("Clearing cache...")
+            clear_cache()
+
+    # Display the results in the GUI
+    display_csv_data(results)
 def filter_data(data, search_query):
     # Convert the search query to lowercase for case-insensitive search
     search_query = str(search_query).lower()
@@ -593,40 +639,7 @@ def search_data(search_query, uploaded_data):
 
     return results
 
-def all_search(search_query, uploaded_data):
-    # Get the current sort option from the GUI
-    sort_option = show_cvesearch_page.sort_var.get()
 
-    # Create a cache key using the search query and sort option
-    cache_key = (search_query, sort_option)
-
-    # Access the global 'uploaded' variable
-    global uploaded
-    print(uploaded)
-
-    # Check if search query and sort option exist in the cache and the data is not uploaded
-    if cache_key in cache and not uploaded:
-        print("Retrieving results from cache...")
-        # Retrieve the results from the cache
-        results = cache[cache_key]
-
-    else:
-        # Perform a new search
-        results = search_data(search_query, uploaded_data)
-
-        # Sort the results based on the selected option
-        results = sort_results(results, sort_option)
-
-        # Cache the results if the data is not uploaded
-        cache_results(cache_key, results)
-
-        # Check cache size and clear if necessary
-        if len(cache) > 100:
-            print("Clearing cache...")
-            clear_cache()
-
-    # Display the results in the GUI
-    display_csv_data(results)
 
 def clear_cache():
     # Clears the cache
