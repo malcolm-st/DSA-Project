@@ -56,8 +56,10 @@ is_program_running = True
 
 bar_chart_created = False
 bar_chart = None
+num_items = 0
 year_chart_created = False
 year_chart = None
+num_year = 0
 uploaded=False
 cache = {}
 rows_to_display = []
