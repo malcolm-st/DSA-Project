@@ -56,10 +56,8 @@ is_program_running = True
 
 bar_chart_created = False
 bar_chart = None
-num_items = 0
 year_chart_created = False
 year_chart = None
-num_year = 0
 uploaded=False
 cache = {}
 rows_to_display = []
@@ -252,16 +250,23 @@ def show_vendor_analysis_page():
     label_analysis.pack_forget()
     analysis.pack_forget()
 
-    # Ask for number of items
-    num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display (Max 20):")
+    # Initialise num_items as none
+    num_items = None
 
     # Ensures num_items is between 1 to 20 inclusive. Prompts user to re-key the value again if too large
-    while num_items > 20 or num_items < 1:
-        num_items = simpledialog.askinteger("Number of vendors", "The value you have entered is not valid.\n\nEnter the number of vendors to display (Max 20):")
-    
-    if num_items is None:
-        return
+    while True:
+        num_items = simpledialog.askinteger("Number of vendors", "Enter the number of vendors to display (Max 20):")
 
+        if num_items is None:
+            return
+
+        if 1 <= num_items <= 20:
+            # The input is valid, break the loop.
+            break
+        else:
+            # The input is not within the valid range, prompt the user again.
+            simpledialog.messagebox.showinfo("Invalid Input", "The value you have entered is not valid.\n\nPlease enter a number between 1 and 20.")
+            
     for child in page_frame.winfo_children():
         child.pack_forget()
     home_page.pack_forget()
@@ -307,15 +312,22 @@ def show_year_analysis_page():
     label_year.pack_forget()
     year.pack_forget()
 
-    # Ask for number of years
-    num_year = simpledialog.askinteger("Number of years", "Enter the number of years to display:")
+    # Initialise num_year as none
+    num_year = None
 
     # Ensures num_years is between 1 to 10 inclusive. Prompts user to re-key the value again if too large
-    while num_year > 20 or num_year < 1:
-        num_year = simpledialog.askinteger("Number of years", "The value you have entered is not valid.\n\nEnter the number of years to display (Max 20):")
-   
-    if num_year is None:
-        return
+    while True:
+        num_year = simpledialog.askinteger("Number of years", "Enter the number of years to display (Max 20):")
+
+        if num_year is None:
+            return
+
+        if 1 <= num_year <= 20:
+            # The input is valid, break the loop.
+            break
+        else:
+            # The input is not within the valid range, prompt the user again.
+            simpledialog.messagebox.showinfo("Invalid Input", "The value you have entered is not valid.\n\nPlease enter a number between 1 and 20.")
 
     for child in page_frame.winfo_children():
         child.pack_forget()
