@@ -310,7 +310,7 @@ def show_year_analysis_page():
 
     # Ensures num_years is between 1 to 10 inclusive. Prompts user to re-key the value again if too large
     while num_year > 20 or num_year < 1:
-        num_year = simpledialog.askinteger("Number of years", "The value you have entered is not valid.\n\nEnter the number of years to display (Max 10):")
+        num_year = simpledialog.askinteger("Number of years", "The value you have entered is not valid.\n\nEnter the number of years to display (Max 20):")
    
     if num_year is None:
         return
