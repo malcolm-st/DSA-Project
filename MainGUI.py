@@ -142,6 +142,8 @@ def run_update_checker():
 def update():
     print("Update button clicked")
 
+    messagebox.showinfo("Real-Time Data Update", "Real-Time Data Update is Enabled.")
+
     # check_for_updates() will update CVEs properly, but GUI will not respond due to while loop
     # Use threading to call the function instead, run_update_checker()
     run_update_checker()
