@@ -173,13 +173,7 @@ def retrieve_data():
 
     # Convert .json files into a single CVECSV.csv files
     # Provide the folder containing JSON files and the desired CSV file
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    json_filename = 'compiledCVE'
-    csv_filename = 'CVECSV.csv'
-    json_folder = os.path.join(dir_path, json_filename)
-    csv_file = os.path.join(dir_path, csv_filename)
-
-    json_to_csv(json_folder, csv_file)
+    json_to_csv('compiledCVE', 'CVECSV.csv')
 
     progress_bar.update(1)
 
