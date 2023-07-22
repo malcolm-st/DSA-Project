@@ -3,12 +3,10 @@ from bs4 import BeautifulSoup
 import zipfile
 import io
 import time
-import threading
 import os
 import shutil
 import json
 import csv
-# from GUIFORDSA import is_program_running
 
 #############################################################################################
 #######################                                            ##########################
@@ -17,9 +15,6 @@ import csv
 #############################################################################################
 
 def move_files_update(source_directory, destination_directory):
-    # if not os.path.exists("testmove"):
-    #     os.makedirs("testmove")
-
     # Iterate over all items in the source directory
     for item in os.listdir(source_directory):
         item_path = os.path.join(source_directory, item)
@@ -159,60 +154,6 @@ def update_cve():
 
     # Removes original updatedCVE folder
     shutil.rmtree("updatedCVE")
-# # Indefinitely check for updates
-# def check_for_updates():
-
-#     # Define the repository details
-#     username = "CVEProject"
-#     repository = "cvelistV5"
-#     branch = "main"
-
-#     # Define the API endpoint and headers
-#     api_endpoint = f"https://api.github.com/repos/{username}/{repository}/branches/{branch}"
-#     headers = {"Accept": "application/vnd.github.v3+json",
-#                "Authorization": "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"}
-
-#     # Initialize the last commit hash
-#     last_commit_hash = None
-
-#     # Loop indefinitely to check for updates
-#     while is_program_running:
-#         # Send a GET request to the API endpoint to get branch details
-#         response = requests.get(api_endpoint, headers=headers)
-
-#         # Check if the response is successful
-#         if response.ok:
-#             # Get the latest commit hash
-#             commit_hash = response.json()["commit"]["sha"]
-
-#             print("Checking Repo for commit hash")
-
-#             # Check if this is the first loop or if the commit hash has changed
-#             if last_commit_hash is None or commit_hash != last_commit_hash:
-#                 print("Updating Local Database")
-#                 # Update the local folder
-#                 update_cve()
-
-#                 # Update the last commit hash
-#                 last_commit_hash = commit_hash
-
-#                 # Log the update
-#                 print(f"Updated local folder withnew changes from GitHub repository. Commit hash: {commit_hash}")
-
-#         else:
-#             # Log the error
-#             print(f"Error checking for updates: {response.status_code} {response.reason}")
-
-#         # Wait for 1 hour before checking again
-#         # time.sleep(3600)
-
-#         # Updates Database every minute
-#         time.sleep(60)
-
-# # Function to call the check_for_updates function in a separate thread so GUI will not crash
-# def run_update_checker():
-#     thread = threading.Thread(target=check_for_updates)
-#     thread.start()
 
 def json_to_csv(json_folder, csv_file):
     # List all JSON files in the folder
