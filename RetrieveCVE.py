@@ -1,4 +1,3 @@
-# retrieve imports
 import git
 import os
 import subprocess
@@ -6,11 +5,6 @@ import shutil
 import csv
 import time
 import json
-from tqdm import tqdm
-# import tkinter as tk
-# from tkinter import ttk
-import threading
-# from GUIFORDSA import retrieval_complete
 
 #############################################################################################
 #######################                                            ##########################
@@ -21,7 +15,6 @@ import threading
 # Clone the repository to a local folder
 repo_url = "https://github.com/CVEProject/cvelistV5.git"
 local_folder = "scrapedCVE"
-
 
 # Pull CVE database
 def pull_cves(progress_bar):
@@ -65,83 +58,6 @@ def move_files(source_directory, destination_directory, progress_bar):
         elif os.path.isdir(item_path):
             # Recursively move files in the sub-directory
             move_files(item_path, destination_directory, progress_bar)
-
-# def check_retrieval_status():
-#     if retrieval_complete.get():
-#         # Show success message
-#         success_label.config(text="Retrieve Data Successful")
-#         # Destroy the loading window
-#         loading_window.destroy()
-#     else:
-#         # Continue checking the status after 100ms
-#         root.after(100, check_retrieval_status)
-
-# def open_loading_window():
-#     global loading_window, success_label, retrieval_complete
-#     loading_window = tk.Toplevel(root)
-#     loading_window.title("Loading...")
-#     loading_window.geometry("400x100")
-#     loading_window.resizable(False, False)
-
-#     progress_label = ttk.Label(loading_window, text="Retrieving data...")
-#     progress_label.pack(pady=10)
-
-#     progress_bar = ttk.Progressbar(loading_window, mode="indeterminate", length=350)
-#     progress_bar.pack(pady=10)
-#     progress_bar.start()
-
-#     success_label = ttk.Label(loading_window, text="")
-#     success_label.pack(pady=10)
-
-#     retrieval_complete = tk.BooleanVar()
-#     retrieval_complete.set(False)
-
-#     loading_thread = Thread(target=retrieve_data)
-#     loading_thread.start()
-
-#     check_retrieval_status()
-
-# def retrieve_data():
-#     print("Retrieve Data button clicked")
-#     # Create a progress bar
-#     total_steps = 4
-#     progress_bar = tqdm(total=total_steps, unit="step")
-
-#     if not os.path.exists("scrapedCVE"):
-#         os.makedirs("scrapedCVE")
-
-#     # Retrieve CVEs from database
-#     # pull_cves(progress_bar)
-#     progress_bar.update(1)
-
-#     # Call the function to remove folders and files
-#     # remove_folders_files(local_folder, progress_bar)
-#     progress_bar.update(1)
-
-#     # Call the function to move files
-#     # move_files("scrapedCVE/cves", "compiledCVE", progress_bar)
-
-#     # Removes original scrapedCVE folder
-#     # shutil.rmtree("scrapedCVE")
-#     progress_bar.update(1)
-
-#     # # Convert .json files into a single CVECSV.csv files
-#     # # Provide the folder containing JSON files and the desired CSV file
-#     # dir_path = os.path.dirname(os.path.realpath(__file__))
-#     # json_filename = 'compiledCVE'
-#     # csv_filename = 'CVECSV.csv'
-#     # json_folder = os.path.join(dir_path, json_filename)
-#     # csv_file = os.path.join(dir_path, csv_filename)
-
-#     # json_to_csv(json_folder, csv_file)
-
-#     progress_bar.update(1)
-
-#     # Close the progress bar
-#     progress_bar.close()
-
-#     # Signal that the retrieval process is complete
-#     retrieval_complete.set(True)
 
 def json_to_csv(json_folder, csv_file):
     # List all JSON files in the folder
