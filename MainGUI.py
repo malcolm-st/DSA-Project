@@ -5,7 +5,6 @@
 #############################################################################################
 
 import tkinter as tk
-# import tkinter.ttk as ttk
 from tkinter import font, filedialog, messagebox, simpledialog, ttk, Scrollbar
 import docx
 import pandas as pd
@@ -364,6 +363,7 @@ def create_year_chart():
     year_chart.draw()
     year_chart.get_tk_widget().pack(fill='both', expand=True)
     year_chart_created = True
+
 #############################################################################################
 #######################                                            ##########################
 #######################        System Security Checker Page        ##########################
@@ -642,8 +642,6 @@ def search_data(search_query, uploaded_data):
 
     return results
 
-
-
 def clear_cache():
     # Clears the cache
     cache.clear()
@@ -651,7 +649,6 @@ def clear_cache():
 
 # Upload button
 def upload():
-
     # Use the global keyword to access the global rows_to_display variable
     global uploaded
     global rows_to_display  
@@ -695,9 +692,9 @@ def upload():
 #######################   USING DICTIONARY BASED LOOKUP TO SEARCH  ##########################
 #######################                                            ##########################
 #############################################################################################
-#To use the dictionary based lookup function instead just highlight the whole thing and uncomment. However, remember to comment the binary search function below.
-#This is solely for project assessment purpose, it is not used but is left for grading purposes to show the difference in both codes.
-#Look at report for more details
+# To use the dictionary based lookup function instead just highlight the whole thing and uncomment. However, remember to comment the binary search function below.
+# This is solely for project assessment purpose, it is not used but is left for grading purposes to show the difference in both codes.
+# Look at report for more details
 
 # def search_csv_by_id(file_path, csv_file):
 
@@ -839,7 +836,7 @@ def search_csv_by_id(file_path, csv_file):
         
         data = sorted([row for row in reader], key=lambda x: x[cve_id_index])
     
-    #Binary search function
+    # Binary search function
     def binary_search(data, target):
         # Set the initial values for the low and high indices
         low = 0
@@ -920,13 +917,20 @@ def export_to_csv(rows_to_display):
 #############################################################################################
 
 def show_home_page():
-    
-    toolcheck.pack_forget()
-    cvesearch.pack_forget()
-    analysis.pack_forget()
-    year.pack_forget()
-    plt.clf()
-    home_page.pack(fill="both", expand=True)   
+    """
+    Show the home page and forget other pages.
+
+    This function is responsible for displaying the home page while hiding any other pages that might be currently displayed
+    (i.e., toolcheck, cvesearch, analysis, year). It uses the pack_forget() method to remove these pages from the view. Additionally,
+    it clears any previous content displayed on the page (assuming plt is matplotlib's pyplot) using plt.clf().
+    """
+    toolcheck.pack_forget()   # Hide the toolcheck page
+    cvesearch.pack_forget()   # Hide the cvesearch page
+    analysis.pack_forget()    # Hide the analysis page
+    year.pack_forget()        # Hide the year page
+    plt.clf()                 # Clear any previous content displayed on the page
+    home_page.pack(fill="both", expand=True)  # Display the home page in the main window
+
 
 #############################################################################################
 #######################                                            ##########################
@@ -982,28 +986,29 @@ button_style = {
     "pady": 10
 }
 
+# Create buttons for Update and Retrieve Data actions
 update_button = tk.Button(home_page, text="Update", command=update, **button_style)
 update_button.pack(pady=10)
 
 retrieve_button = tk.Button(home_page, text="Retrieve Data", command=open_loading_window, **button_style)
 retrieve_button.pack(pady=10)
 
-# Create the Page 1
+# Create the System Security Checker frame
 toolcheck = tk.Frame(page_frame, bg="light blue")
 label_toolcheck = tk.Label(toolcheck, text="System Security Checker", font=title_font, bg="#f2f2f2")
 
-# Create the Page 2
+# Create the CVE Search frame
 cvesearch = tk.Frame(page_frame, bg="light blue")
 
-# Create the Page 3
+# Create Vendor frame
 analysis = tk.Frame(page_frame, bg="light blue")
 label_analysis = tk.Label(analysis, text="Vendor Analysis", font=title_font, bg="#f2f2f2")
 
-# Create year frame
+# Create Year frame
 year = tk.Frame(page_frame, bg="light blue")
 label_year = tk.Label(year, text="Year Analysis", font=title_font, bg="#f2f2f2")
 
-# Create navigation buttons
+# Create navigation buttons for easy page switching
 nav_frame = tk.Frame(root, bg="#f2f2f2")
 nav_frame.pack(side="bottom", pady=10)
 
@@ -1026,7 +1031,7 @@ root.geometry(f"{screen_width}x{screen_height}")  # Set window size to full scre
 
 cvesearch = tk.Frame(page_frame, bg="light blue")
 
-# Create a Frame for the return button
+# Create a Frame for the return button and cache counter
 return_frame = tk.Frame(cvesearch, bg="light blue")
 return_frame.pack(side="bottom", fill="x")
     
@@ -1047,18 +1052,20 @@ show_cvesearch_page.cache_counter.pack(side="right", padx=15, pady=10)
 #############################################################################################
 
 def show_page(page):
+    """Raise the given page to the front, making it visible."""
     page.tkraise()
 
 # Set initial page
 show_page(home_page)
 
 def quit_program():
+    """Quit the program and close all threads and the main GUI window."""
     root.quit()
     global is_program_running
     is_program_running = False
     root.destroy()
 
-# Bind the on_close function to the close event of the GUI window
+# Bind the quit_program function to the close event of the GUI window
 root.protocol("WM_DELETE_WINDOW", quit_program)
 
 quit_button = tk.Button(nav_frame, text="Quit", command=quit_program, **button_style)
