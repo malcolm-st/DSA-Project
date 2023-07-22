@@ -137,6 +137,7 @@ def check_for_updates():
 # Function to call the check_for_updates function in a separate thread so GUI will not crash
 def run_update_checker():
     thread = threading.Thread(target=check_for_updates)
+    thread.daemon = True
     thread.start()
 
 def update():
