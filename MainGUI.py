@@ -5,33 +5,23 @@
 #############################################################################################
 
 import tkinter as tk
-from tkinter import font, filedialog, messagebox, simpledialog, ttk, Scrollbar
+from tkinter import font, filedialog, messagebox, simpledialog, ttk
 import docx
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import csv
-import win32api
-import win32gui
 
 # retrieve imports
-import git
 import os
-import subprocess
 import shutil
 from tqdm import tqdm
 from threading import Thread
 
 # update imports
 import requests
-from bs4 import BeautifulSoup
-import zipfile
-import io
 import time
 import threading
-
-# json to csv imports
-import json
 
 # for URL openings
 import webbrowser
@@ -57,7 +47,7 @@ bar_chart_created = False
 bar_chart = None
 year_chart_created = False
 year_chart = None
-uploaded=False
+uploaded = False
 cache = {}
 rows_to_display = []
 
