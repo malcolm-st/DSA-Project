@@ -1,9 +1,11 @@
 import csv
 import random 
 
+#main dataset file path
 csv_file = "CVECSV.csv" 
 noOfCVEID = int(input("Enter number of randomly generated cve id:"))
 
+#Open dataset file and randomly select 'user inputted' number of CVE ID
 with open(csv_file, "r", encoding="utf-8") as csv_in:
 
     reader = csv.reader(csv_in)
@@ -23,6 +25,7 @@ with open(csv_file, "r", encoding="utf-8") as csv_in:
 output_path = input("Enter path for output text file: ")
 output_file = output_path + "/test"+str(noOfCVEID)+".txt"
 
+#Open CSV file and populate the generated CVE ID into it
 with open(output_file, "w") as txt_out:
     for cve_id in random_cves:
         txt_out.write(cve_id + "\n")

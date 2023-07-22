@@ -33,7 +33,6 @@ from YearAnalysis import *
 from UpdateCVE import *
 from RetrieveCVE import *
 
-
 #############################################################################################
 #######################                                            ##########################
 #######################       Global Variables and Functions       ##########################
@@ -485,7 +484,6 @@ def show_cvesearch_page():
     show_cvesearch_page.upload_button.pack_forget()
     show_cvesearch_page.upload_button.pack(side=tk.LEFT, pady=5)
 
-    
 #This function displays the csv data
 def display_csv_data(data):
 
@@ -572,6 +570,7 @@ def all_search(search_query, uploaded_data):
 
     # Display the results in the GUI
     display_csv_data(results)
+
 def filter_data(data, search_query):
     # Convert the search query to lowercase for case-insensitive search
     search_query = str(search_query).lower()
@@ -675,7 +674,6 @@ def upload():
         # error handling statement
         else:
             print("Invalid file format. Please upload a DOCX or TXT file.")
-
 
 #############################################################################################
 #######################                                            ##########################
@@ -869,6 +867,7 @@ def search_csv_by_id(file_path, csv_file):
     # Calculate elapsed time
     elapsed_time = time.time() - start_time
     print(f"Data extraction complete. Elapsed time: {elapsed_time:.2f} seconds.")
+    
     # Return the list of rows to display
     return rows_to_display
 
