@@ -220,8 +220,8 @@ def open_loading_window():
     retrieval_complete = tk.BooleanVar()
     retrieval_complete.set(False)
 
-    # from RetrieveCVE import retrieve_data
     loading_thread = Thread(target=retrieve_data)
+    loading_thread.daemon = True
     loading_thread.start()
 
     check_retrieval_status()
