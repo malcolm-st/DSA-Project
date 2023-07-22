@@ -9,7 +9,7 @@ CVE Aggregator is a Python tool developed to facilitate the aggregation, analysi
 
 
 ## Introduction
-Cybersecurity is of paramount importance in today's digital landscape, and staying informed about the latest vulnerabilities is crucial for organizations to safeguard their systems and data. CVE Aggregator simplifies the process of accessing and analyzing CVE data, offering a user-friendly interface to explore vulnerabilities based on various criteria, including vendor, year, CVSS score, and more.
+In today's digital landscape, cybersecurity holds immense importance. Organizations must prioritize staying informed about the latest vulnerabilities to protect their systems and data effectively. To simplify this process, CVE Aggregator offers a user-friendly interface that allows users to easily access and analyze CVE data. It enables the exploration of vulnerabilities based on various criteria, ranging from vendor details to CVSS score and more.
 
 ## Features
 - Data Aggregation: CVE Aggregator collects data from the official repository of CVE Records, providing a comprehensive and up-to-date collection of CVE information.
