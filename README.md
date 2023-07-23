@@ -22,7 +22,7 @@ In today's digital landscape, cybersecurity holds immense importance. Organizati
 ## Getting Started
 1. Run CVE_Aggregator_Installer.exe in INF1008_SourceCodes.zip
 2. After installation, run Dependencies_Installer.exe
-NOTE: If Dependencies_Installer.exe does not work, refer to INF1008_UserManual and follow the Installation Guide.
+<br><b>NOTE:</b> If Dependencies_Installer.exe does not work, refer to INF1008_UserManual and follow the Installation Guide.
 3. After dependencies have been downloaded, run CVE_Aggregator.exe
 Please refer to INF1008_UserManual for more information
 
