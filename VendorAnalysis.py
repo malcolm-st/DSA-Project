@@ -37,6 +37,7 @@ def merge(left, right):
 
     return merged
 
+# Function used to generate a Impacted Vendor Frequency chart based on the CVECSV.csv file
 def vendor_frequency_analysis(num_items):
     vendor_counts = {}
 
@@ -72,4 +73,4 @@ def vendor_frequency_analysis(num_items):
     plt.ylabel('Vendor')  # Label for the y-axis
     plt.title("Top "+str(num_items)+" Vendors by Frequency")  # Title of the plot
     plt.tight_layout()  # Ensure labels fit within the plot
-    # plt.show()  # Display the plot
+    # plt.show()  # Display the plot in a popup window

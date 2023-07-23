@@ -14,6 +14,7 @@ import csv
 #######################                                            ##########################
 #############################################################################################
 
+# Function used to move .json files from updated CVE folder to compiledCVE folder
 def move_files_update(source_directory, destination_directory):
     # Iterate over all items in the source directory
     for item in os.listdir(source_directory):
@@ -31,6 +32,7 @@ def move_files_update(source_directory, destination_directory):
             # Recursively move files in the sub-directory
             move_files_update(item_path, destination_directory)
 
+# Function used to update the CVECSV.csv file based on the updates retrieved from GitHub repository
 def update_csv_from_json():
     json_folder = 'updatedCVE/deltaCves'
     csv_file = 'CVECSV.csv'
@@ -93,6 +95,7 @@ def update_csv_from_json():
         writer = csv.writer(file)
         writer.writerows(csv_data)
 
+# Function used to fetch updated CVEs from repository and update the CVECSV.csv file
 def update_cve():
     # Define the URL and CSS selector
     url = "https://github.com/CVEProject/cvelistV5/releases"
@@ -154,42 +157,3 @@ def update_cve():
 
     # Removes original updatedCVE folder
     shutil.rmtree("updatedCVE")
-
-def json_to_csv(json_folder, csv_file):
-    # List all JSON files in the folder
-    json_files = [file for file in os.listdir(json_folder) if file.endswith('.json')]
-
-    with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-
-        # Write header
-        writer.writerow(['CveID', 'Vendor', 'Score', 'Description'])
-
-        # Start the timer
-        start_time =  time.time()
-        # Process each JSON file
-        for json_file in json_files:
-            with open(os.path.join(json_folder, json_file), encoding='utf-8') as file:
-                try:
-                    data = json.load(file)
-                    cve_id = data.get('cveMetadata', {}).get('cveId', '')
-                    
-                    # Access affected vendors
-                    affected_vendors = data.get('containers', {}).get('cna', {}).get('affected', [])
-                    vendor = affected_vendors[0].get('vendor', '') if affected_vendors else ''
-                    
-                    # Access base score
-                    metrics = data.get('containers', {}).get('cna', {}).get('metrics', [])
-                    score = metrics[0].get('cvssV3_0', {}).get('baseScore', '') if metrics else ''
-                    
-                    # Access description value
-                    descriptions = data.get('containers', {}).get('cna', {}).get('descriptions', [])
-                    description = descriptions[0].get('value', '') if descriptions else ''
-                    
-                    writer.writerow([cve_id, vendor, score, description])
-                except:
-                    print(f"Error has occurred while processing {json_file}. Skipping the file.")
-    
-    # Calculate elapsed time
-    elapsed_time = time.time() - start_time
-    print(f"Data extraction complete. Elapsed time: {elapsed_time:.2f} seconds.")

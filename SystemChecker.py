@@ -6,6 +6,7 @@ import subprocess
 #######################                                            ##########################
 #############################################################################################
 
+# Function used to check user's Windows Defender Real-time Monitoring setting
 def check_windows_defender_settings():
     try:
         # Run a PowerShell command to check if Windows Defender Real-time Monitoring is disabled
@@ -22,7 +23,7 @@ def check_windows_defender_settings():
         # An error occurred while running the PowerShell command
         return "Error occurred while checking Windows Defender settings."
 
-
+# Function used to check user's firewall profiles settings
 def check_firewall_settings():
     try:
         # Run a PowerShell command to check if the firewall is enabled for different profiles

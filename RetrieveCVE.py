@@ -40,6 +40,7 @@ def remove_folders_files(directory, progress_bar):
                 subprocess.run(command, shell=True)
     progress_bar.update(1)
 
+# Used to move all CVE information containing .json files to a single "compiledCVE" folder
 def move_files(source_directory, destination_directory, progress_bar):
     if not os.path.exists("compiledCVE"):
         os.makedirs("compiledCVE")
@@ -59,6 +60,7 @@ def move_files(source_directory, destination_directory, progress_bar):
             # Recursively move files in the sub-directory
             move_files(item_path, destination_directory, progress_bar)
 
+# Used to convert all CVE information in .json files into a single CVECSV.csv file
 def json_to_csv(json_folder, csv_file):
     # List all JSON files in the folder
     json_files = [file for file in os.listdir(json_folder) if file.endswith('.json')]

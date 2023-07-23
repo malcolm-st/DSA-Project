@@ -1,7 +1,7 @@
 import subprocess
 import ctypes
 
-# List of libraries to install
+# List of Dependencies
 libraries = [
     "tkinter",
     "python-docx",
@@ -14,7 +14,7 @@ libraries = [
     "pywin32"
 ]
 
-# To install the libraries
+# To install the libraries required for CVE Aggregator to run
 def install_libraries():
     for lib in libraries:
         try:
