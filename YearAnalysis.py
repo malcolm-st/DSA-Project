@@ -39,6 +39,7 @@ def merge(left, right):
 
     return merged
 
+# Used to gather the Year of the CVEs using regex
 def sanitize_cve_id(cve_id):
     # Use regular expression to extract the year from the CVE ID
     year_match = re.search(r'CVE-(\d{4})-\d+', cve_id)
@@ -46,7 +47,8 @@ def sanitize_cve_id(cve_id):
         return year_match.group(1)
     else:
         return 'n/a' 
-    
+
+# Used to plot the chart for CVE Year Analysis
 def year_frequency_analysis(num_year):
     years = {}  # Clear the years dictionary
 
