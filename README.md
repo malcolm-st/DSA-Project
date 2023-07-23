@@ -20,7 +20,11 @@ In today's digital landscape, cybersecurity holds immense importance. Organizati
 - System Security Checker: Assess system settings like Windows Defender and Firewall configurations within the same platform.
 
 ## Getting Started
-Please refer to the CVE Aggregator User Manual for more information
+1. Run CVE_Aggregator_Installer.exe in INF1008_SourceCodes.zip
+2. After installation, run Dependencies_Installer.exe
+NOTE: If Dependencies_Installer.exe does not work, refer to INF1008_UserManual and follow the Installation Guide.
+3. After dependencies have been downloaded, run CVE_Aggregator.exe
+Please refer to INF1008_UserManual for more information
 
 ## Documentation
-For detailed documentation on the implementation, dataset used, data pre-processing, and data analysis algorithms, please refer to the CVE Aggregator Final Report.
+For detailed documentation on the implementation, dataset used, data pre-processing, and data analysis algorithms, please refer to INF1008_FinalReport
